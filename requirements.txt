@@ -1,0 +1,11 @@
+uvicorn
+fastapi
+python-keycloak
+elasticsearch
+sklearn
+numpy
+nltk
+unidecode
+motor
+odmantic
+dnspython
