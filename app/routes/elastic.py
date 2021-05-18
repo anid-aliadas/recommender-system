@@ -10,7 +10,7 @@ from fastapi import APIRouter
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 
-
+import requests
 router = APIRouter()
 
 # ElasticSearch initialization
@@ -134,11 +134,11 @@ def get_products_search(search_text):
     response = es.search(index="spree-products",
                          body=search_dict)['hits']['hits']
     if len(response) > 0:
-        for num, doc in enumerate(response):
-            print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
-
+        #for num, doc in enumerate(response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
+        results_ids = []
         SOG_response = []
         SOG_response.append(response.pop(0))
+        results_ids.append(int(SOG_response[-1]['_id']))
         with open('app/files/products/data.pkl', 'rb') as f:
             docs_dict = pickle.load(f)
         with open('app/files/products/similarities_matrix.pkl', 'rb') as f:
@@ -151,11 +151,10 @@ def get_products_search(search_text):
                     max_score = score
                     best_doc = doc
             SOG_response.append(response.pop(response.index(best_doc)))
-
-        print()
-        for num, doc in enumerate(SOG_response):
-            print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
-        return {'response': SOG_response}
+            results_ids.append(int(SOG_response[-1]['_id']))
+        #print("*"*50)
+        #for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
+        return {'response': SOG_response, 'results_ids' : results_ids}
     return {'response': response}
 
 @router.get("/vendors/search/{search_text}")

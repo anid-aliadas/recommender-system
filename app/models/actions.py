@@ -27,5 +27,5 @@ class ActionOverVendor(Model):
 
 class ActionOverQuery(Model):
     query_text: str
-    results_id: Tuple[int, ...]
+    results_ids: Tuple[int, ...]
     searched_at: datetime = datetime.now()
