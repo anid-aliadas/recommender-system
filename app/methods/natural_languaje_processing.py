@@ -19,8 +19,15 @@ def clean_text_round2(text):
     return text
 
 def stemmer(text):
-    with open('app/spanish_stopwords.txt', 'r') as f:
+    with open('app/files/natural_languaje_processing/spanish_stopwords.txt', 'r') as f:
         stopwords = [unidecode(word.strip()) for word in f]
     text_words = [unidecode(word.strip()) for word in text.split(' ')]
     text_words = [word for word in text_words if word not in stopwords]
     return ' '.join(text_words)
+
+
+def get_top_vocabulary(X, vec, top_n):
+    sum_corpus_words = X.sum(axis=0)
+    words_freq = [(word, sum_corpus_words[0, idx]) for word, idx in vec.vocabulary_.items()]
+    words_freq = sorted(words_freq, key = lambda x: x[1], reverse=True)
+    return [word for word, freq in words_freq[:top_n]]
