@@ -9,3 +9,4 @@ unidecode
 motor
 odmantic
 dnspython
+scipy
