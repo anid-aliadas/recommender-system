@@ -10,7 +10,8 @@ from fastapi import APIRouter
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 
-import requests
+
+from scipy.sparse import vstack
 router = APIRouter()
 
 # ElasticSearch initialization
@@ -46,12 +47,16 @@ def vectorize_products():
         cleaned_text = stemmer(clean_text_round2(clean_text_round1(doc_name + ' ' + str(doc_description))))
         docs_dict[doc_id]['cleaned_vocabulary'] = list(set(cleaned_text.split(' ')))
         corpus.append(cleaned_text)
-    # print(len(corpus))
+
     vec = vectorizer.fit(corpus)  # dense matrix - bert para español
-    X = vec.transform(corpus)
+    X = vec.transform(corpus) #corpus vecs
+
     top_vocabulary = get_top_vocabulary(X, vec, 25)
+    centroid = X.mean(axis=0) #vecs means
+    X = vstack([X, centroid]) #add centroid to position -1
     for doc_id in docs_dict:
         docs_dict[doc_id]['unpop'] = len(np.intersect1d(docs_dict[doc_id]['cleaned_vocabulary'], top_vocabulary))/len(top_vocabulary)
+    docs_dict.update({ -1 : { 'unpop' : 0 } })
 
     X = cosine_similarity(X) # The value in the i-th row and j-th column of the result is the cosine similarity between the i-th and j-th row of array.
     with open('app/files/products/data.pkl', 'wb') as f:
@@ -134,7 +139,7 @@ def get_products_search(search_text):
     response = es.search(index="spree-products",
                          body=search_dict)['hits']['hits']
     if len(response) > 0:
-        #for num, doc in enumerate(response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
+        for num, doc in enumerate(response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
         results_ids = []
         SOG_response = []
         SOG_response.append(response.pop(0))
@@ -152,8 +157,8 @@ def get_products_search(search_text):
                     best_doc = doc
             SOG_response.append(response.pop(response.index(best_doc)))
             results_ids.append(int(SOG_response[-1]['_id']))
-        #print("*"*50)
-        #for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
+        print("*"*50)
+        for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
         return {'response': SOG_response, 'results_ids' : results_ids}
     return {'response': response}
 
@@ -185,7 +190,7 @@ def get_vendors_search(search_text):
             docs_dict = pickle.load(f)
         with open('app/files/vendors/similarities_matrix.pkl', 'rb') as f:
             sim_matrix = pickle.load(f)
-        for i in range(len(response)):  # iterate through top docs ---- SOG
+        for _ in range(len(response)):  # iterate through top docs ---- SOG
             max_score = -1
             for doc in response:
                 score = SOG_score_vendors(doc, SOG_response, docs_dict, sim_matrix)

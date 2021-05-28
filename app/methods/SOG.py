@@ -2,12 +2,12 @@ def SOG_score(doc, candidate_set, docs_dict, sim_matrix):
     score = 0
     div_iB = 0
     n = 0
-    product_index = docs_dict[int(doc['_id'])]['local_index']
+    product_index = docs_dict.get(int(doc['_id']), { 'local_index': -1 } ).get('local_index') #si no esta en el modelo toma el centroide
     product_vendor = doc['_source']['vendor']['name']
-    unpop_i = docs_dict[int(doc['_id'])]['unpop']
+    unpop_i = docs_dict.get(int(doc['_id']), { 'unpop': 0 } ).get('unpop')
     for candidate_doc in candidate_set:
         candidate_vendor = candidate_doc['_source']['vendor']['name']
-        candidate_index = docs_dict[int(candidate_doc['_id'])]['local_index']
+        candidate_index = docs_dict.get(int(candidate_doc['_id']), { 'local_index': -1 } ).get('local_index')
         div_iB += (1 - sim_matrix[product_index][candidate_index])
         if product_vendor == candidate_vendor: n += 1
     product_score = doc['_score']

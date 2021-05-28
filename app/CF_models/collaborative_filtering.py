@@ -108,7 +108,8 @@ class Recommender(object):
         normalize: bool whether to normalize the matrix or not
         '''
         self.X = X # dataset
-        self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),(X!=0).sum(1)))) # mean rating for all users
+        #self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),(X!=0).sum(1)))) # mean rating for all users
+        self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),X.shape[1])))
         self.Xmean2 = np.squeeze(np.asarray(np.true_divide(X.power(2).sum(1),(X!=0).sum(1)))) # mean of squared values for all users
         self.std = np.sqrt(self.Xmean2 - self.Xmean**2)# [1/i if i != 0 else float('inf') for i in np.sqrt(self.Xmean2 - self.Xmean**2)] # sqrt(E[X**2] - E[X]**2) ; inverted as they will be used for normalizing 
         
@@ -147,6 +148,9 @@ class Recommender(object):
         '''
         # Calculate cosine distance to all users in the dataset
         Y = np.squeeze(np.asarray((self.X * self.X[row_i].T).todense()))
+
+        
+
         Z = self.row_norms * self.row_norms[row_i]
         W = np.true_divide(Y, Z, out=np.zeros(Y.shape), where=Z!=0)
         
@@ -245,7 +249,7 @@ def exec():
     TOP_ITEMS = 2
     ALPHA = 1.3
 
-    data = [4,5,1,5,5,4,5,2,4,5,4,3,3]
+    data = [1,1,1,1,1,1,1,1,1,1,1,1,1]
     row_ind = [0,0,0,1,1,1,1,2,2,2,2,3,3]
     col_ind = [0,3,4,0,1,2,5,3,4,5,6,1,6]
     
