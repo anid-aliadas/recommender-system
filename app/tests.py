@@ -10,4 +10,5 @@ body = {
   "results_ids": response['results_ids']
 }
 
-asd = requests.put(url='http://localhost:8000/test', json=body)
+asd = requests.post(url='http://localhost:8000/products/search/historic', json=body)
+print(asd.json())

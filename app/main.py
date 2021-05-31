@@ -24,13 +24,11 @@ app.include_router(predictions.router)
 
 # TESTING ZONE
 
-@app.get("/test")
-async def test():
-    with open("app/files/products/data.pkl", "rb") as file:
-        docs_dict = pickle.load(file)
+@app.post("/test")
+async def test(body: ActionOverQuery):
 
-    print(docs_dict)
-    return {'test': 'success'}
+    await engine.save(body)
+    return {'test': body}
 
 # RUN COMMAND: $ uvicorn app.main:app --reload
 

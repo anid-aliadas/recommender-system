@@ -7,7 +7,7 @@ from ..CF_models.collaborative_filtering import Recommender, exec
 
 router = APIRouter()
 
-@router.get("/predictions/items/update/matrix")
+@router.get("/predictions/update")
 def update_matrix():
 
     url = "https://kong.aliad.as/action-logs/actions/products"
