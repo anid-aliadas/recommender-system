@@ -10,3 +10,5 @@ motor
 odmantic
 dnspython
 scipy
+spacy
+pandas

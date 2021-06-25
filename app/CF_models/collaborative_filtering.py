@@ -51,7 +51,7 @@ import numpy as np
 from collections import defaultdict
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix, diags
-
+from sklearn.metrics.pairwise import cosine_similarity
 
 class RecommenderUserModel(object):
     def __init__(self, RS, W, row_i):
@@ -108,14 +108,23 @@ class Recommender(object):
         normalize: bool whether to normalize the matrix or not
         '''
         self.X = X # dataset
-        #self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),(X!=0).sum(1)))) # mean rating for all users
-        self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),X.shape[1])))
+        self.users_similarity_matrix = cosine_similarity(X)
+        self.items_similarity_matrix = cosine_similarity(X.T)
+        self.unpop = X.sum(axis=0)/X.shape[0]
+
+        self.users_data = {}
+        self.unique_users = []
+        self.unique_items = []
+
+        self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),(X!=0).sum(1)))) # mean rating for all users
+
+        #self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),X.shape[1])))
         self.Xmean2 = np.squeeze(np.asarray(np.true_divide(X.power(2).sum(1),(X!=0).sum(1)))) # mean of squared values for all users
         self.std = np.sqrt(self.Xmean2 - self.Xmean**2)# [1/i if i != 0 else float('inf') for i in np.sqrt(self.Xmean2 - self.Xmean**2)] # sqrt(E[X**2] - E[X]**2) ; inverted as they will be used for normalizing 
         
 
         self.normalized = False
-        self.normalized_std =normalize_std
+        self.normalized_std = normalize_std
         # The mask is a matrix with the same shape to the dataset
         # however it has ones where a value exists
         self.mask = X.copy()
@@ -187,7 +196,7 @@ class Recommender(object):
 
         out['std'] = self.std[row_i]
         if limits is None:
-            out['r'] = {i:R[i] for i in top_item_indices}
+            out['r'] = [(i, R[i]) for i in top_item_indices]
         else:
             out['r'] = {i:max(min(R[i], limits[1]),limits[0]) for i in top_item_indices}
         
