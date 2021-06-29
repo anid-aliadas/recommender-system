@@ -1,6 +1,7 @@
 import re
 import string
-import nltk
+import time
+import spacy
 from unidecode import unidecode
 
 
@@ -32,7 +33,17 @@ def get_top_vocabulary(X, vec, top_n):
     words_freq = sorted(words_freq, key = lambda x: x[1], reverse=True)
     return [word for word, freq in words_freq[:top_n]]
 
-def get_nouns(text):
-    tokenized_text = text.split()
-    nouns_string = nltk.pos_tag(tokenized_text)
-    return nouns_string
+def get_nouns(text, top_n = 5):
+    start_time = time.time()
+    POS_tagger = spacy.load('es_dep_news_trf')
+    tagged_words = POS_tagger(text.lower())
+    nouns_string = ""
+    lemma_freq = {}
+    for word in tagged_words:
+        if word.pos_ == 'NOUN': 
+            if word.lemma_ not in lemma_freq: lemma_freq[word.lemma_] = 0
+            lemma_freq[word.lemma_] += 1
+    sort_lemma_freq = sorted(lemma_freq.items(), key=lambda x: x[1], reverse=True)
+    for noun in sort_lemma_freq[:5]: nouns_string += (' ' + noun[0])
+    print("--- %s seconds ---" % (time.time() - start_time))
+    return nouns_string.strip()
