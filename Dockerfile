@@ -11,3 +11,4 @@ COPY ./app /app/app
 # Instalar dependencias
 
 RUN pip install -r requirements.txt
+RUN python -m spacy download es_dep_news_trf
