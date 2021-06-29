@@ -1,7 +1,8 @@
+from app.methods.natural_languaje_processing import get_nouns
 from app.methods.SOG import SOG_score_predictions, calc_SOG_prof_ui
 from ..dependencies import config
 from elasticsearch import Elasticsearch
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from datetime import datetime
 import numpy as np
 import scipy.sparse as sp
@@ -23,7 +24,9 @@ def temporalRank(timestamp):
 
     return int(score(days))
 
-def searchProduct(product_name):
+def searchProduct(search_text):
+    search_text = get_nouns(search_text)
+    print(search_text)
     search_dict = {
         'query': {
             'bool': {
@@ -33,7 +36,7 @@ def searchProduct(product_name):
                             'path': "taxons",
                             'query': {
                                 'multi_match': {
-                                    'query': product_name,
+                                    'query': search_text,
                                     'fields': ['*.name']
                                 }
                             }
@@ -41,7 +44,7 @@ def searchProduct(product_name):
                     },
                     {
                         'multi_match': {
-                            'query': product_name,
+                            'query': search_text,
                             'fields': ['name', 'description', 'vendor.name']
                         }
                     }
@@ -56,13 +59,11 @@ def searchProduct(product_name):
 
 router = APIRouter()
 
-@router.get("/predictions/update")
-def update_model():
-
+@router.get("/recommender/update")
+def update_model(req: Request):
     url = "https://kong.aliad.as/action-logs/actions/products"
-    token = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5MkxickZhUW8tUm5zejY1djMydmt0VUdRbXVKejNSY0ptY3g5MURBZTBzIn0.eyJleHAiOjE2MjQ1MDM1MzcsImlhdCI6MTYyNDQ5MjczNywianRpIjoiN2YyYzRlNWMtNTE2Ni00YjgyLWI0MGMtYTI0OWRjZmViMDdlIiwiaXNzIjoiaHR0cHM6Ly9rZXljbG9hay5hbGlhZC5hcy9hdXRoL3JlYWxtcy9hbGlhZGFzIiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjdlYzlmMmUwLTI4ZmYtNDBlZS04ZDg1LTliY2Q4OWVkMjM0MCIsInR5cCI6IkJlYXJlciIsImF6cCI6ImFsaWFkYXMtbW9iaWxlIiwic2Vzc2lvbl9zdGF0ZSI6ImNmMTc0ZTY4LWQwYjgtNGM5OC1hNmMzLTNlMGZmZjRmZTZkYiIsImFjciI6IjEiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJjb21wcmFkb3IiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIHBob25lIHByb2ZpbGUgcnV0IGFkZHJlc3MgYXZhdGFyIG9mZmxpbmVfYWNjZXNzIGVtYWlsIHdlYnNpdGUgZ2VuZGVyIiwicnV0IjoiIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFkZHJlc3MiOnt9LCJnZW5kZXIiOiJIb21icmUiLCJuYW1lIjoiQ3Jpc3RpYW4gQnJhbnQgQ2hhbW9ycm8iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJjaGFtb3Jyb2JyYW50IiwiYXZhdGFyIjoiaHR0cDovL2Vjb21tZXJjZS1hcGkubGMtaXA4MS5pbmYudXRmc20uY2wvcmFpbHMvYWN0aXZlX3N0b3JhZ2UvcmVwcmVzZW50YXRpb25zL2V5SmZjbUZwYkhNaU9uc2liV1Z6YzJGblpTSTZJa0pCYUhCQmJWbENJaXdpWlhod0lqcHVkV3hzTENKd2RYSWlPaUppYkc5aVgybGtJbjE5LS1lN2M0MjJlMDI5NzU1ZDQ0OWMyMDE4MjkyMGUxN2UxYjFjMWFjZmY2L2V5SmZjbUZwYkhNaU9uc2liV1Z6YzJGblpTSTZJa0pCYURkQ2FtOU1ZMjFXZW1GWWNHeFRVMGxPVG1wVmQyVkVaek5OUkRSSFQyZGFSbFpCUFQwaUxDSmxlSEFpT201MWJHd3NJbkIxY2lJNkluWmhjbWxoZEdsdmJpSjlmUT09LS1mZDU0OTNkNjBkMWYzYmFkODg3NDE3OWMyZGZlYTA1ZTk5MjRiYzdjLzgxNTMwOWZkLTk2NWEtNDdmNy1hNWIxLWYxYWQ2YmFlM2Q5MC5qcGciLCJnaXZlbl9uYW1lIjoiQ3Jpc3RpYW4iLCJmYW1pbHlfbmFtZSI6IkJyYW50IENoYW1vcnJvIiwiZW1haWwiOiJjaGFtb3Jyb2JyYW50QGdtYWlsLmNvbSJ9.AjsQa8VHlNu6x8uR4saBtqdqtocevJRcIKScBbgB84y41sKiBDWUSj9QwX9Mxt88lPPy37Z-guryCyxK4v6o7YKJaWzFvYorOgVBvsHmEdRLBDyICUiNKKan2f2md0P27-GoPQYFGVAhjUn4VJxRu7ZuQGNkVEgsqjvwdtKPYiZKK5nCLjSOoteahxikJRIP-KbXhIdQ-7FXkzBWbkHw0fZf-mutRjrsINZAP7zPYZgl6QWk0nBiKy45vTgc6LxvtM5oA8zb6TusIKuJ5s8ePy5yqI8GQ6Aoh4T7vSvPmVKn2W6NwCHloqGFyb7-NAiIQuqc4p7Jr-5HLtghWH1HwQ"
     headers = {
-        "Authorization": "bearer " + token,
+        "Authorization": req.headers["Authorization"],
     }
     page = 0
     response = {'response': 'initial'}
@@ -82,7 +83,7 @@ def update_model():
         response = requests.get(url, headers=headers,
                                 params=params).json()
 
-        if isinstance(response, str): return {'response' : response}
+        if isinstance(response, str): return {'response' : response} #Para retornar error de autorizacion por ahora
 
         for action in response:
             if action['action_product_id']['product_id'] not in products_dict: continue #Si el producto fue borrado
@@ -96,6 +97,9 @@ def update_model():
 
 
     UNIQUE_USERS = sorted(list(users_actions_dict.keys()))
+
+    print(UNIQUE_USERS)
+
     UNIQUE_ITEMS = sorted(list(products_dict.keys())) 
     UNIQUE_ITEMS.remove(-1)
     
@@ -108,16 +112,14 @@ def update_model():
             col_ind.append(UNIQUE_ITEMS.index(item_id))
             data.append(temporal_rank)
 
-    print(users_actions_dict)
+    #print(users_actions_dict)
 
     X = sp.csr_matrix((data, (row_ind, col_ind)), shape=(len(UNIQUE_USERS), len(UNIQUE_ITEMS))).tolil() # sparse csr matrix
-
-    print(X.todense())
-
     unlogged_items = set(UNIQUE_ITEMS) - logged_items
+
     ### NON-LOGGED ITEMS BOOST ###
     for item_id in unlogged_items:
-        response = searchProduct(products_dict[item_id]['name'])
+        response = searchProduct( str(products_dict[item_id]['name']) + ' ' + str(products_dict[item_id]['description']))
         similar_ids = []
         for doc in response:
             if int(doc['_id']) != item_id: similar_ids.append(UNIQUE_ITEMS.index(int(doc['_id'])))
@@ -137,29 +139,25 @@ def update_model():
     return {'response': 'success'}
 
 
-@router.get("/recommender/{user_id}")
-def recommend_to_user(user_id: int):
+@router.get("/recommender")
+def recommend_to_user(user_id: str):
     with open("app/files/RS/Recommender.pkl", "rb") as file:
         RS = pickle.load(file)
         file.close()
-    if 0 <= user_id <= len(RS.unique_users):#RS.unique_users:
+    if user_id in RS.unique_users:#RS.unique_users:
 
         users_actions_dict = RS.users_data 
         UNIQUE_USERS = RS.unique_users
         UNIQUE_ITEMS = RS.unique_items
-        user_id = UNIQUE_USERS[user_id]
         user_index = UNIQUE_USERS.index(user_id)
 
-        with open("app/files/products/data.pkl", "rb") as file:
-            products_dict = pickle.load(file)
-            file.close()
         out = RS.recommend(user_index, top_users=2, top_items=10, alpha=1, limits=None)
         SOG_prof_ui = calc_SOG_prof_ui(out['r'], [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], RS.items_similarity_matrix)
 
         #out = RS.recommend(UNIQUE_USERS.index(user_id), top_users=5, top_items=5, alpha=1, limits=None) VERSION PARA EL RELEASE
 
         ##### SOG #####
-        original_response = out['r'][:]
+        #original_response = out['r'][:]
 
         SOG_response = []
         SOG_response.append(out['r'].pop(0))
@@ -172,7 +170,7 @@ def recommend_to_user(user_id: int):
                     best_item = item_data
             SOG_response.append(out['r'].pop(out['r'].index(best_item)))
         
-        return { 'original_order': original_response, 'SOG_order': SOG_response }
+        return { 'response': SOG_response }
 
     else: return { 'response': 'user not in model' }
 

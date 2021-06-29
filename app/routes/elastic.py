@@ -3,16 +3,12 @@ from ..methods.SOG import SOG_score_elastic
 from ..methods.natural_languaje_processing import *
 from elasticsearch import Elasticsearch
 import pickle
-from ..database import engine
 from ..models.actions import *
-
 import numpy as np
 import random
 from fastapi import APIRouter
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
-
-
 from scipy.sparse import vstack
 router = APIRouter()
 
@@ -25,7 +21,7 @@ es = Elasticsearch(
     port=config('ELASTIC_PORT')
 )
 
-# ROUTES FOR DATA UPDATE
+# UPDATING ROUTES
 
 @router.get("/products/vectorize")
 def vectorize_products():
@@ -50,7 +46,7 @@ def vectorize_products():
         docs_dict[doc_id]['cleaned_vocabulary'] = list(set(cleaned_text.split(' ')))
         corpus.append(cleaned_text)
 
-    vec = vectorizer.fit(corpus)  # dense matrix - bert para español
+    vec = vectorizer.fit(corpus)  
     X = vec.transform(corpus) #corpus vecs
 
     top_vocabulary = get_top_vocabulary(X, vec, 25)
@@ -68,7 +64,6 @@ def vectorize_products():
     return {"Products vectorization": "success!"}
 
 # SEARCHING ROUTES
-
 
 @router.get("/products/search/{search_text}")
 def get_products_search(search_text):
@@ -110,8 +105,7 @@ def get_products_search(search_text):
             docs_dict = pickle.load(f)
         with open('app/files/products/similarities_matrix.pkl', 'rb') as f:
             sim_matrix = pickle.load(f)
-        for i in range(len(response)):  # iterate through top docs ---- SOG
-            print(i)
+        for _ in range(len(response)):  # iterate through top docs ---- SOG
             max_score = -1
             for doc in response:
                 score = SOG_score_elastic(doc, SOG_response, docs_dict, sim_matrix)
@@ -122,7 +116,7 @@ def get_products_search(search_text):
             results_ids.append(int(SOG_response[-1]['_id']))
         #print("*"*50)
         #for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
-        return {'response': SOG_response, 'results_ids' : results_ids}
+        return { 'results_ids' : results_ids }
     return {'response': response}
 
 @router.get("/vendors/new")
@@ -138,9 +132,3 @@ def get_new_vendors(sample_size:int = 3, n_newest:int = 10):
     }
     response = es.search(index="spree-vendors", body=search_dict)["hits"]["hits"]
     return random.sample(response, sample_size)
-
-
-@router.post("/products/search/historic")
-async def save_search_history(body: ActionOverQuery):
-    await engine.save(body) #quizá encerrar en un try catch?
-    return {'response': 'success'}
