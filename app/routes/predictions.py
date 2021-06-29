@@ -61,7 +61,7 @@ router = APIRouter()
 
 @router.get("/recommender/update")
 def update_model(req: Request):
-    url = "https://kong.aliad.as/action-logs/actions/products"
+    url = "https://kong.aliad.as/action-logs/logs_query/products"
     headers = {
         "Authorization": req.headers["Authorization"],
     }
