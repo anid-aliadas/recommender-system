@@ -44,6 +44,6 @@ def get_nouns(text, top_n = 5):
             if word.lemma_ not in lemma_freq: lemma_freq[word.lemma_] = 0
             lemma_freq[word.lemma_] += 1
     sort_lemma_freq = sorted(lemma_freq.items(), key=lambda x: x[1], reverse=True)
-    for noun in sort_lemma_freq[:5]: nouns_string += (' ' + noun[0])
-    print("--- %s seconds ---" % (time.time() - start_time))
+    for noun in sort_lemma_freq[:top_n]: nouns_string += (' ' + noun[0])
+    #print("--- %s seconds ---" % (time.time() - start_time))
     return nouns_string.strip()

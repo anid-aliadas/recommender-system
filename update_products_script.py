@@ -1,0 +1,2 @@
+from app.updating_methods.update_search_model import vectorize_products
+print(vectorize_products())
