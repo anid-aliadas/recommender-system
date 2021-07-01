@@ -7,7 +7,8 @@ COPY ./.env /app/.env
 # Archivos de paquete "app"
 
 COPY ./app /app/app
-
+COPY ./update_products_script.py / 
+COPY ./update_recommender_script.py /
 # Instalar dependencias
 
 RUN pip install -r requirements.txt
