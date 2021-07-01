@@ -67,17 +67,13 @@ def update_model(user_token):
         products_dict = pickle.load(file)
         file.close()
 
-
+    print("Retrieving users actions")
     while( response != [] ):
         params = {
             "page": page,
-            "per_page": 100,
+            "per_page": 1000,
         }
-        response = requests.get(url, headers=headers,
-                                params=params).json()
-
-        if isinstance(response, str): return {'response' : response} #Para retornar error de autorizacion por ahora
-
+        response = requests.get(url, headers=headers, params=params).json()
         for action in response:
             if action['action_product_id']['product_id'] not in products_dict: continue #Si el producto fue borrado
             if action['action_product_id']['user_id'] not in users_actions_dict:
@@ -85,7 +81,6 @@ def update_model(user_token):
             if action['action_product_id']['product_id'] not in users_actions_dict[action['action_product_id']['user_id']]: 
                 users_actions_dict[action['action_product_id']['user_id']][action['action_product_id']['product_id']] = temporalRank(action['updated_at'])
                 logged_items.add(action['action_product_id']['product_id'])
-
         page+=1
 
 
@@ -103,16 +98,17 @@ def update_model(user_token):
             data.append(temporal_rank)
 
     #print(users_actions_dict)
-
+    print("Building user-products matrix")
     X = sp.csr_matrix((data, (row_ind, col_ind)), shape=(len(UNIQUE_USERS), len(UNIQUE_ITEMS))).tolil() # sparse csr matrix
     unlogged_items = set(UNIQUE_ITEMS) - logged_items
 
     ### NON-LOGGED ITEMS BOOST ###
+    print("Boosting non-logged products")
     for item_id in unlogged_items:
         response = searchProduct( str(products_dict[item_id]['name']) + ' ' + str(products_dict[item_id]['description']))
         similar_ids = []
         for doc in response:
-            if int(doc['_id']) != item_id: similar_ids.append(UNIQUE_ITEMS.index(int(doc['_id'])))
+            if int(doc['_id']) != item_id and int(doc['_id']) in UNIQUE_ITEMS: similar_ids.append(UNIQUE_ITEMS.index(int(doc['_id'])))
         if similar_ids != []:
             centroid = sp.lil_matrix((X[:, similar_ids]).mean(axis=1))
             X[:, UNIQUE_ITEMS.index(item_id)] = centroid
@@ -122,6 +118,8 @@ def update_model(user_token):
     RS.unique_users = UNIQUE_USERS
     RS.unique_items = UNIQUE_ITEMS
 
+    print("Saving model")
     with open("app/files/RS/Recommender.pkl", "wb") as file:
         pickle.dump(RS, file)
         file.close()
+    return "Recommender model updated"

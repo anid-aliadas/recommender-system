@@ -1,60 +1,40 @@
 from ..dependencies import config
 from ..methods.natural_languaje_processing import *
-from elasticsearch import Elasticsearch
 import pickle
 from ..models.actions import *
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 from scipy.sparse import vstack
-
-# ElasticSearch initialization
-
-es = Elasticsearch(
-    [config('ELASTIC_DIR')],
-    http_auth=(config('ELASTIC_USR'), config('ELASTIC_PWD')),
-    scheme="http",
-    port=config('ELASTIC_PORT')
-)
+import requests
 
 def vectorize_products():
+    page=0
+    url = config('SPREE_PRODUCTS_URL')
+    headers = {
+        "X-Spree-Token": config('SPREE_API_KEY')
+    } 
+    params = {
+        "page": page,
+        "per_page": 1000,
+        "excluded_taxon_ids[]": 305,
+    }
+    all_products = []
+    response = requests.get(url, headers=headers, params=params).json()['response']
+    while( response != [] ):
+        all_products += response
+        page += 1
+        params = {
+            "page": page,
+            "per_page": 1000,
+            "excluded_taxon_ids[]": 305,
+        }
+        response = requests.get(url, headers=headers, params=params).json()['response']
     corpus = []
     vectorizer = CountVectorizer()
-    """ 
-            "query": {
-            "filtered": {
-                "query": {
-                    "match_all": {}
-                },
-                "filter": {
-                    "bool": {
-                        "must_not": [
-                            {
-                                "term": {
-                                    "_source.taxons.id": "305"
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    
-     """
-    search_dict = {
-        'query': {
-            'match_all': {}
-        },
-        'size': 10000,  # máximo admisible actualmente
-    }
-
-    response = es.search(index="spree-products", body=search_dict)
-    response_hits = response['hits']['hits']
-
-    print(response_hits[0])
 
     docs_dict = {}
-    for num, doc in enumerate(response_hits):
+    for num, doc in enumerate(all_products):
         doc_id = doc['_source']['id']
         doc_name = doc['_source']['name']
         doc_description = doc['_source']['description']
