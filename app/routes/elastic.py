@@ -21,50 +21,6 @@ es = Elasticsearch(
     port=config('ELASTIC_PORT')
 )
 
-# UPDATING ROUTES
-
-@router.get("/products/vectorize")
-def vectorize_products():
-    corpus = []
-    vectorizer = CountVectorizer()
-    search_dict = {
-        'query': {
-            'match_all': {}
-        },
-        'size': 10000,  # máximo admisible actualmente
-    }
-    response = es.search(index="spree-products", body=search_dict)
-    response_hits = response['hits']['hits']
-    docs_dict = {}
-    for num, doc in enumerate(response_hits):
-        doc_id = doc['_source']['id']
-        doc_name = doc['_source']['name']
-        doc_description = doc['_source']['description']
-        docs_dict[doc_id] = {'local_index': num, 'name': doc_name, 'description': doc_description}
-        # print(num,' ', doc_name, ': ', doc_description)
-        cleaned_text = accent_mark_removal(clean_text_round2(clean_text_round1(doc_name + ' ' + str(doc_description))))
-        docs_dict[doc_id]['cleaned_vocabulary'] = list(set(cleaned_text.split(' ')))
-        corpus.append(cleaned_text)
-
-    vec = vectorizer.fit(corpus)  
-    X = vec.transform(corpus) #corpus vecs
-
-    top_vocabulary = get_top_vocabulary(X, vec, 25)
-    centroid = X.mean(axis=0) #vecs means
-    X = vstack([X, centroid]) #add centroid to position -1
-    for doc_id in docs_dict:
-        docs_dict[doc_id]['unpop'] = len(np.intersect1d(docs_dict[doc_id]['cleaned_vocabulary'], top_vocabulary))/len(top_vocabulary)
-    docs_dict.update({ -1 : { 'unpop' : 0 } })
-
-    X = cosine_similarity(X) # The value in the i-th row and j-th column of the result is the cosine similarity between the i-th and j-th row of array.
-    with open('app/files/products/data.pkl', 'wb') as f:
-        pickle.dump(docs_dict, f)
-    with open('app/files/products/similarities_matrix.pkl', 'wb') as f:
-        pickle.dump(X, f)
-    return {"Products vectorization": "success!"}
-
-# SEARCHING ROUTES
-
 @router.get("/products/search/{search_text}")
 def get_products_search(search_text):
     search_dict = {
@@ -117,7 +73,7 @@ def get_products_search(search_text):
         #print("*"*50)
         #for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
         return { 'results_ids' : results_ids }
-    return {'response': response}
+    return {'results_ids': response}
 
 @router.get("/vendors/new")
 def get_new_vendors(sample_size:int = 3, n_newest:int = 10):
