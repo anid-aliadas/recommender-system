@@ -8,6 +8,8 @@ from elasticsearch import Elasticsearch
 from ..methods.natural_languaje_processing import get_nouns
 from ..CF_models.collaborative_filtering import Recommender
 
+import time
+
 es = Elasticsearch(
     [config('ELASTIC_DIR')],
     http_auth=(config('ELASTIC_USR'), config('ELASTIC_PWD')),
@@ -19,7 +21,7 @@ def temporalRank(timestamp):
     days = (datetime.now() - datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")).days
     score = lambda x: max(round((1-logistic.cdf(x/3, loc=5, scale=1))*5, 0), 0.001)
 
-    return int(score(days))
+    return score(days)
 
 def searchProduct(search_text):
     search_text = get_nouns(search_text)
@@ -54,12 +56,15 @@ def searchProduct(search_text):
     return response
 
 def update_model(user_token):
-    url = config('ACTION_LOGS_URL') + '/products'
+    url = config('ACTION_LOGS_URL') + '/logs_query/products'
     headers = {
         "Authorization": user_token,
     }
-    page = 0
-    response = {'response': 'initial'}
+    params = {
+        "page": 0,
+        "per_page": 100,
+    }
+    response = ""
     users_actions_dict = {}
     logged_items = set()
 
@@ -69,11 +74,10 @@ def update_model(user_token):
 
     print("Retrieving users actions")
     while( response != [] ):
-        params = {
-            "page": page,
-            "per_page": 1000,
-        }
         response = requests.get(url, headers=headers, params=params).json()
+
+        if isinstance(response, str): return {'response' : response} #Para retornar error de autorizacion por ahora
+
         for action in response:
             if action['action_product_id']['product_id'] not in products_dict: continue #Si el producto fue borrado
             if action['action_product_id']['user_id'] not in users_actions_dict:
@@ -81,7 +85,8 @@ def update_model(user_token):
             if action['action_product_id']['product_id'] not in users_actions_dict[action['action_product_id']['user_id']]: 
                 users_actions_dict[action['action_product_id']['user_id']][action['action_product_id']['product_id']] = temporalRank(action['updated_at'])
                 logged_items.add(action['action_product_id']['product_id'])
-        page+=1
+
+        params["page"] += 1
 
 
     UNIQUE_USERS = sorted(list(users_actions_dict.keys()))
@@ -100,18 +105,31 @@ def update_model(user_token):
     #print(users_actions_dict)
     print("Building user-products matrix")
     X = sp.csr_matrix((data, (row_ind, col_ind)), shape=(len(UNIQUE_USERS), len(UNIQUE_ITEMS))).tolil() # sparse csr matrix
+
+
+
     unlogged_items = set(UNIQUE_ITEMS) - logged_items
 
+    #print(len(unlogged_items))
+    i = 0
     ### NON-LOGGED ITEMS BOOST ###
     print("Boosting non-logged products")
+
+    
     for item_id in unlogged_items:
+        print("item:", i)
+
         response = searchProduct( str(products_dict[item_id]['name']) + ' ' + str(products_dict[item_id]['description']))
+        
+
         similar_ids = []
         for doc in response:
             if int(doc['_id']) != item_id and int(doc['_id']) in UNIQUE_ITEMS: similar_ids.append(UNIQUE_ITEMS.index(int(doc['_id'])))
         if similar_ids != []:
             centroid = sp.lil_matrix((X[:, similar_ids]).mean(axis=1))
             X[:, UNIQUE_ITEMS.index(item_id)] = centroid
+        
+        i+=1
 
     RS = Recommender(X.tocsr(), normalize=True)
     RS.users_data = users_actions_dict

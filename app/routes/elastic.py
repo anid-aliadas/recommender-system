@@ -1,3 +1,4 @@
+from app.methods.historical_queries import search_historic_queries
 from ..dependencies import config
 from ..methods.SOG import SOG_score_elastic
 from ..methods.natural_languaje_processing import *
@@ -43,37 +44,57 @@ def get_products_search(search_text):
                             'query': search_text,
                             'fields': ['name', 'description', 'vendor.name']
                         }
+                    },
+                ],
+                'must_not': {
+                    'nested': {
+                        'path': "taxons",
+                        'query':{
+                            'match': {
+                                "taxons.id": 305
+                            }
+                        }
                     }
-                ]
+                }
             }
         },
         'size': 100,
     }
-    response = es.search(index="spree-products",
-                         body=search_dict)['hits']['hits']
-    if len(response) > 0:
-        #for num, doc in enumerate(response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
-        results_ids = []
-        SOG_response = []
-        SOG_response.append(response.pop(0))
+
+    historical_search = search_historic_queries(text= search_text, days_ago=1)
+    print(historical_search)
+    if isinstance(historical_search, str): return { 'results_ids': [], 'error': historical_search } 
+
+    if len(historical_search) > 0: return { 'results_ids': historical_search[0]['results_ids'] }
+
+    response = es.search(index="spree-products", body=search_dict)['hits']['hits']
+
+    print(response[0])
+
+    if len(response) == 0: return { 'results_ids': [] }
+    
+    #for num, doc in enumerate(response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
+    results_ids = []
+    SOG_response = []
+    SOG_response.append(response.pop(0))
+    results_ids.append(int(SOG_response[-1]['_id']))
+    with open('app/files/products/data.pkl', 'rb') as f:
+        docs_dict = pickle.load(f)
+    with open('app/files/products/similarities_matrix.pkl', 'rb') as f:
+        sim_matrix = pickle.load(f)
+    for _ in range(len(response)):  # iterate through top docs ---- SOG
+        max_score = -1
+        for doc in response:
+            score = SOG_score_elastic(doc, SOG_response, docs_dict, sim_matrix)
+            if score > max_score:
+                max_score = score
+                best_doc = doc
+        SOG_response.append(response.pop(response.index(best_doc)))
         results_ids.append(int(SOG_response[-1]['_id']))
-        with open('app/files/products/data.pkl', 'rb') as f:
-            docs_dict = pickle.load(f)
-        with open('app/files/products/similarities_matrix.pkl', 'rb') as f:
-            sim_matrix = pickle.load(f)
-        for _ in range(len(response)):  # iterate through top docs ---- SOG
-            max_score = -1
-            for doc in response:
-                score = SOG_score_elastic(doc, SOG_response, docs_dict, sim_matrix)
-                if score > max_score:
-                    max_score = score
-                    best_doc = doc
-            SOG_response.append(response.pop(response.index(best_doc)))
-            results_ids.append(int(SOG_response[-1]['_id']))
-        #print("*"*50)
-        #for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
-        return { 'results_ids' : results_ids }
-    return {'results_ids': response}
+    #print("*"*50)
+    #for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
+    return { 'results_ids': results_ids }
+    
 
 @router.get("/vendors/new")
 def get_new_vendors(sample_size:int = 3, n_newest:int = 10):

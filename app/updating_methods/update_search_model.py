@@ -9,27 +9,24 @@ from scipy.sparse import vstack
 import requests
 
 def vectorize_products():
-    page=0
     url = config('SPREE_PRODUCTS_URL')
     headers = {
         "X-Spree-Token": config('SPREE_API_KEY')
     } 
     params = {
-        "page": page,
+        "page": 0,
         "per_page": 1000,
         "excluded_taxon_ids[]": 305,
     }
     all_products = []
-    response = requests.get(url, headers=headers, params=params).json()['response']
+    response = ""
     while( response != [] ):
-        all_products += response
-        page += 1
-        params = {
-            "page": page,
-            "per_page": 1000,
-            "excluded_taxon_ids[]": 305,
-        }
         response = requests.get(url, headers=headers, params=params).json()['response']
+
+        #condicion de error en response
+        
+        all_products += response
+        params["page"] += 1
     corpus = []
     vectorizer = CountVectorizer()
 
