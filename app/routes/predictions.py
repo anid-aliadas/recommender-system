@@ -22,7 +22,7 @@ def temporalRank(timestamp):
     days = (datetime.now() - datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")).days
     score = lambda x: max(round((1-logistic.cdf(x/3, loc=5, scale=1))*5, 0), 0.001)
 
-    return int(score(days))
+    return score(days)
 
 def searchProduct(search_text):
     search_text = get_nouns(search_text)
@@ -52,19 +52,21 @@ def searchProduct(search_text):
         },
         'size': 11,
     }
-    response = es.search(index="spree-products",
-                         body=search_dict)['hits']['hits']
+    response = es.search(index="spree-products", body=search_dict)['hits']['hits']
     return response
 
 router = APIRouter()
 
 @router.get("/recommender/update")
 def update_model(req: Request):
-    url = config('ACTION_LOGS_URL') + '/products'
+    url = config('ACTION_LOGS_URL') + '/logs_query/products'
     headers = {
         "Authorization": req.headers["Authorization"],
     }
-    page = 0
+    params = {
+        "page": 0,
+        "per_page": 100,
+    }
     response = {'response': 'initial'}
     users_actions_dict = {}
     logged_items = set()
@@ -74,12 +76,7 @@ def update_model(req: Request):
         file.close()
 
     while( response != [] ):
-        params = {
-            "page": page,
-            "per_page": 100,
-        }
-        response = requests.get(url, headers=headers,
-                                params=params).json()
+        response = requests.get(url, headers=headers, params=params).json()
 
         if isinstance(response, str): return {'response' : response} #Para retornar error de autorizacion por ahora
 
@@ -91,12 +88,14 @@ def update_model(req: Request):
                 users_actions_dict[action['action_product_id']['user_id']][action['action_product_id']['product_id']] = temporalRank(action['updated_at'])
                 logged_items.add(action['action_product_id']['product_id'])
 
-        page+=1
+        params["page"] += 1
+
+    print(users_actions_dict)
+
     UNIQUE_USERS = sorted(list(users_actions_dict.keys()))
     UNIQUE_ITEMS = sorted(list(products_dict.keys())) 
     UNIQUE_ITEMS.remove(-1)
-    
-
+   
     row_ind = [UNIQUE_USERS.index(k) for k, v in users_actions_dict.items() for _ in range(len(v))]
     col_ind = []
     data = []
@@ -137,12 +136,13 @@ def recommend_to_user(user_id: str):
     with open("app/files/RS/Recommender.pkl", "rb") as file:
         RS = pickle.load(file)
         file.close()
-    if user_id in RS.unique_users:#RS.unique_users:
-
+    if user_id in RS.unique_users:
         users_actions_dict = RS.users_data 
         UNIQUE_USERS = RS.unique_users
         UNIQUE_ITEMS = RS.unique_items
         user_index = UNIQUE_USERS.index(user_id)
+
+        print(RS.X.todense())
 
         out = RS.recommend(user_index, top_users=2, top_items=10, alpha=1, limits=None)
         SOG_prof_ui = calc_SOG_prof_ui(out['r'], [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], RS.items_similarity_matrix)

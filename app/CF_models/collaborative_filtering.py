@@ -117,9 +117,12 @@ class Recommender(object):
         self.unique_items = []
 
         self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),(X!=0).sum(1)))) # mean rating for all users
+        #self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1), X.shape[1])))
+        
+        #EXISTE OTRA ALTERNATIVA? ESTO
 
-        #self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),X.shape[1])))
         self.Xmean2 = np.squeeze(np.asarray(np.true_divide(X.power(2).sum(1),(X!=0).sum(1)))) # mean of squared values for all users
+        #self.Xmean2 = np.squeeze(np.asarray(np.true_divide(X.power(2).sum(1), X.shape[1])))
         self.std = np.sqrt(self.Xmean2 - self.Xmean**2)# [1/i if i != 0 else float('inf') for i in np.sqrt(self.Xmean2 - self.Xmean**2)] # sqrt(E[X**2] - E[X]**2) ; inverted as they will be used for normalizing 
         
 
@@ -165,6 +168,8 @@ class Recommender(object):
         
         # Choose top users to recommend (plus 1, the target user is always selected)
         top_user_indices = heapq.nlargest(top_users+1, range(len(W)), W.take)
+
+        print(top_user_indices)
         # Remove target user from recommenders
         top_user_indices.remove(row_i)
         

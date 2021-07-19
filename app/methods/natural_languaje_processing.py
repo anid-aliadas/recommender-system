@@ -4,6 +4,7 @@ import time
 import spacy
 from unidecode import unidecode
 
+POS_tagger = spacy.load('es_dep_news_trf')
 
 def clean_text_round1(text):
     '''Make text lowercase, remove text in square brackets, remove punctuation and remove words containing numbers.'''
@@ -34,8 +35,6 @@ def get_top_vocabulary(X, vec, top_n):
     return [word for word, freq in words_freq[:top_n]]
 
 def get_nouns(text, top_n = 5):
-    start_time = time.time()
-    POS_tagger = spacy.load('es_dep_news_trf')
     tagged_words = POS_tagger(text.lower())
     nouns_string = ""
     lemma_freq = {}
@@ -45,5 +44,4 @@ def get_nouns(text, top_n = 5):
             lemma_freq[word.lemma_] += 1
     sort_lemma_freq = sorted(lemma_freq.items(), key=lambda x: x[1], reverse=True)
     for noun in sort_lemma_freq[:top_n]: nouns_string += (' ' + noun[0])
-    #print("--- %s seconds ---" % (time.time() - start_time))
     return nouns_string.strip()
