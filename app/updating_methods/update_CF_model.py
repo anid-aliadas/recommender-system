@@ -105,37 +105,25 @@ def update_model(user_token):
     #print(users_actions_dict)
     print("Building user-products matrix")
     X = sp.csr_matrix((data, (row_ind, col_ind)), shape=(len(UNIQUE_USERS), len(UNIQUE_ITEMS))).tolil() # sparse csr matrix
-
-
-
     unlogged_items = set(UNIQUE_ITEMS) - logged_items
 
-    #print(len(unlogged_items))
     i = 0
     ### NON-LOGGED ITEMS BOOST ###
     print("Boosting non-logged products")
 
-    
     for item_id in unlogged_items:
-        print("item:", i)
-
         response = searchProduct( str(products_dict[item_id]['name']) + ' ' + str(products_dict[item_id]['description']))
-        
-
         similar_ids = []
         for doc in response:
             if int(doc['_id']) != item_id and int(doc['_id']) in UNIQUE_ITEMS: similar_ids.append(UNIQUE_ITEMS.index(int(doc['_id'])))
         if similar_ids != []:
             centroid = sp.lil_matrix((X[:, similar_ids]).mean(axis=1))
             X[:, UNIQUE_ITEMS.index(item_id)] = centroid
-        
         i+=1
-
     RS = Recommender(X.tocsr(), normalize=True)
     RS.users_data = users_actions_dict
     RS.unique_users = UNIQUE_USERS
     RS.unique_items = UNIQUE_ITEMS
-
     print("Saving model")
     with open("app/files/RS/Recommender.pkl", "wb") as file:
         pickle.dump(RS, file)

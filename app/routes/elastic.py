@@ -62,15 +62,9 @@ def get_products_search(search_text):
     }
 
     historical_search = search_historic_queries(text= search_text, days_ago=1)
-    print(historical_search)
     if isinstance(historical_search, str): return { 'results_ids': [], 'error': historical_search } 
-
     if len(historical_search) > 0: return { 'results_ids': historical_search[0]['results_ids'] }
-
     response = es.search(index="spree-products", body=search_dict)['hits']['hits']
-
-    print(response[0])
-
     if len(response) == 0: return { 'results_ids': [] }
     
     #for num, doc in enumerate(response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])

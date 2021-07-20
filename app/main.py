@@ -26,4 +26,6 @@ app.include_router(predictions.router)
 # TESTING ZONE
 
 # RUN COMMAND: $ uvicorn app.main:app --reload
+# $ update_products_script.py
+# $ update_recommender_script.py
 

@@ -1,6 +1,7 @@
 from ..dependencies import config
 from starlette.middleware.base import BaseHTTPMiddleware
 from keycloak import KeycloakOpenID
+from jose import JWTError
 from fastapi.responses import JSONResponse
 
 '''
@@ -29,7 +30,7 @@ class ValidateUserToken(BaseHTTPMiddleware):
             request.state.user_data = token_info
             response = await call_next(request)
             return response
-        except Exception as e:
+        except (JWTError, KeyError):
             return JSONResponse(
                 status_code=401,
                 content="Usted no está autorizado para realizar la presente consulta"
