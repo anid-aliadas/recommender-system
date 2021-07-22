@@ -13,7 +13,7 @@ def search_historic_queries(text, days_ago = 1, months_ago = 0, years_ago = 0):
         "query_match": text,
         "years_ago": years_ago,
         "months_ago": months_ago,
-        "days_age": days_ago
+        "days_ago": days_ago
     }
     historical_data = []
     response = ""
