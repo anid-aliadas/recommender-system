@@ -62,14 +62,20 @@ def get_products_search(search_text):
     }
 
     historical_search = search_historic_queries(text= search_text, days_ago=1)
-    print(historical_search)
-
-    if isinstance(historical_search, str): return { 'results_ids': [], 'historical': False, 'error': historical_search } 
-    if len(historical_search) > 0: return { 'results_ids': historical_search[0]['results_ids'], 'historical': True, 'error': False }
     response = es.search(index="spree-products", body=search_dict)['hits']['hits']
+
+    #Checking if elastic result has data, if it's the case, we extract it
     if len(response) == 0: return { 'results_ids': [], 'historical': False, 'error': False }
+    elastic_result = []
+    for doc in response: elastic_result.append(doc['_source']['id'])
+
+    #Checking for errors in historical search and returning just the elastic result
+    if isinstance(historical_search, str): return { 'results_ids': elastic_result, 'historical': False, 'error': historical_search } 
     
-    #for num, doc in enumerate(response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
+    #If the historical search and the elastic one are the same we do not run SOG
+    if len(historical_search) > 0 and set(historical_search['results_ids']) == set(elastic_result): return { 'results_ids': historical_search['results_ids'], 'historical': True, 'error': False }
+    
+    #If there's new data we run SOG
     results_ids = []
     SOG_response = []
     SOG_response.append(response.pop(0))
@@ -87,8 +93,6 @@ def get_products_search(search_text):
                 best_doc = doc
         SOG_response.append(response.pop(response.index(best_doc)))
         results_ids.append(int(SOG_response[-1]['_id']))
-    #print("*"*50)
-    #for num, doc in enumerate(SOG_response): print(num, "--", doc['_source']['name'], "--", doc['_source']['vendor']['name'])
     return { 'results_ids': results_ids, 'historical': False, 'error': False }
     
 
