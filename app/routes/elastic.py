@@ -71,9 +71,9 @@ def get_products_search(search_text):
 
     #Checking for errors in historical search and returning just the elastic result
     if isinstance(historical_search, str): return { 'results_ids': elastic_result, 'historical': False, 'error': historical_search } 
-    
+
     #If the historical search and the elastic one are the same we do not run SOG
-    if len(historical_search) > 0 and set(historical_search['results_ids']) == set(elastic_result): return { 'results_ids': historical_search['results_ids'], 'historical': True, 'error': False }
+    if len(historical_search) > 0 and set(historical_search[0]['results_ids']) == set(elastic_result): return { 'results_ids': historical_search[0]['results_ids'], 'historical': True, 'error': False }
     
     #If there's new data we run SOG
     results_ids = []
