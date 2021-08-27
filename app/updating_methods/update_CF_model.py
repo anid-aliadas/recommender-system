@@ -88,12 +88,10 @@ def update_model(user_token):
 
         params["page"] += 1
 
-
     UNIQUE_USERS = sorted(list(users_actions_dict.keys()))
     UNIQUE_ITEMS = sorted(list(products_dict.keys())) 
     UNIQUE_ITEMS.remove(-1)
     
-
     row_ind = [UNIQUE_USERS.index(k) for k, v in users_actions_dict.items() for _ in range(len(v))]
     col_ind = []
     data = []
@@ -107,6 +105,7 @@ def update_model(user_token):
     X = sp.csr_matrix((data, (row_ind, col_ind)), shape=(len(UNIQUE_USERS), len(UNIQUE_ITEMS))).tolil() # sparse csr matrix
     unlogged_items = set(UNIQUE_ITEMS) - logged_items
 
+    
     i = 0
     ### NON-LOGGED ITEMS BOOST ###
     print("Boosting non-logged products")
@@ -124,6 +123,7 @@ def update_model(user_token):
     RS.users_data = users_actions_dict
     RS.unique_users = UNIQUE_USERS
     RS.unique_items = UNIQUE_ITEMS
+
     print("Saving model")
     with open("app/files/RS/Recommender.pkl", "wb") as file:
         pickle.dump(RS, file)

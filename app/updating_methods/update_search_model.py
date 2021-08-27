@@ -36,7 +36,7 @@ def vectorize_products():
         doc_name = doc['_source']['name']
         doc_description = doc['_source']['description']
         docs_dict[doc_id] = {'local_index': num, 'name': doc_name, 'description': doc_description}
-        # print(num,' ', doc_name, ': ', doc_description)
+
         cleaned_text = accent_mark_removal(clean_text_round2(clean_text_round1(doc_name + ' ' + str(doc_description))))
         docs_dict[doc_id]['cleaned_vocabulary'] = list(set(cleaned_text.split(' ')))
         corpus.append(cleaned_text)
@@ -44,7 +44,7 @@ def vectorize_products():
     vec = vectorizer.fit(corpus)  
     X = vec.transform(corpus) #corpus vecs
 
-    top_vocabulary = get_top_vocabulary(X, vec, 25)
+    top_vocabulary = get_top_vocabulary(X, vec, float(config('TOP_N_VOCAB_WORDS_PERCENTAGE')))
     centroid = X.mean(axis=0) #vecs means
     X = vstack([X, centroid]) #add centroid to position -1
     for doc_id in docs_dict:

@@ -1,4 +1,11 @@
-def SOG_score_elastic(doc, candidate_set, docs_dict, sim_matrix):
+from ..dependencies import config
+
+def SOG_score_elastic(doc, candidate_set, docs_dict, sim_matrix, prof_ui):
+    ES_SOG_REL_PARAM_W = float(config('ES_SOG_REL_PARAM_W'))
+    ES_SOG_DIV_PARAM_W = float(config('ES_SOG_DIV_PARAM_W'))
+    ES_SOG_PROF_UI_PARAM_W = float(config('ES_SOG_PROF_UI_PARAM_W'))
+    ES_SOG_UNPOP_I_PARAM_W = float(config('ES_SOG_UNPOP_I_PARAM_W'))
+    ES_SOG_DIV_VEN_PARAM_W = float(config('ES_SOG_DIV_VEN_PARAM_W'))
     score = 0
     div_iB = 0
     n = 0
@@ -14,10 +21,24 @@ def SOG_score_elastic(doc, candidate_set, docs_dict, sim_matrix):
     div_vendor_iB = 1/(n+1)
 
     #comparar doc_vendor contra todos los vendors del candidate_Set
-    #Si no lo encontramos (doc_vendor) se el asigna prob V.import
-    #Si lo encontramos se le asigna prov V/n+1 donde n es la cantidad de apariciones en candidate_Set
-    score += 0.2 * product_score + 0.4 * (div_iB/len(candidate_set)) + 0.2 * unpop_i + 0.2 * div_vendor_iB
+    #Si no lo encontramos (doc_vendor) se le asigna prob V.import
+    #Si lo encontramos se le asigna prob V/n+1 donde n es la cantidad de apariciones en candidate_Set
+    score += ES_SOG_REL_PARAM_W     * product_score                \
+          +  ES_SOG_DIV_PARAM_W     * (div_iB/len(candidate_set))  \
+          +  ES_SOG_PROF_UI_PARAM_W * prof_ui[int(doc['_id'])]     \
+          +  ES_SOG_UNPOP_I_PARAM_W * unpop_i                      \
+          +  ES_SOG_DIV_VEN_PARAM_W * div_vendor_iB
     return score
+
+def filter_products_ids(ids_array, products_data):
+    return [products_data[i]['local_index'] if i in products_data else -1 for i in ids_array]
+
+def calc_SOG_prof_ui_search(historical_items_ids, search_items_ids, items_similarity_matrix, products_data):
+    SOG_prof_ui = {}
+    for item_id in search_items_ids:
+        if item_id not in products_data: SOG_prof_ui[item_id] = 1 - items_similarity_matrix[-1, historical_items_ids].mean()
+        else: SOG_prof_ui[item_id] = 1 - items_similarity_matrix[[products_data[item_id]['local_index']], historical_items_ids].mean()
+    return SOG_prof_ui
 
 def calc_SOG_prof_ui(top_items, user_data, items_similarity_matrix):
     SOG_prof_ui = {}
@@ -31,10 +52,17 @@ def calc_SOG_prof_ui(top_items, user_data, items_similarity_matrix):
 
 
 def SOG_score_predictions(item_data, candidate_set, prof_ui, unpop_i, items_similarity_matrix):
+    RS_SOG_REL_PARAM_W = float(config('RS_SOG_REL_PARAM_W'))
+    RS_SOG_DIV_PARAM_W = float(config('RS_SOG_DIV_PARAM_W'))
+    RS_SOG_PROF_UI_PARAM_W = float(config('RS_SOG_PROF_UI_PARAM_W'))
+    RS_SOG_UNPOP_I_PARAM_W = float(config('RS_SOG_UNPOP_I_PARAM_W'))
     score = 0
     div_iB = 0
     i_item_index, i_item_relevance = item_data
     for c_item_index, _ in candidate_set:
         div_iB += (1 - items_similarity_matrix[i_item_index][c_item_index])
-    score += 0.1 * i_item_relevance + 0.5 * (div_iB/len(candidate_set)) + 0.2 * prof_ui + 0.2 * unpop_i 
+    score += RS_SOG_REL_PARAM_W     * i_item_relevance \
+          +  RS_SOG_DIV_PARAM_W     * (div_iB/len(candidate_set)) \
+          +  RS_SOG_PROF_UI_PARAM_W * prof_ui \
+          +  RS_SOG_UNPOP_I_PARAM_W * unpop_i 
     return score

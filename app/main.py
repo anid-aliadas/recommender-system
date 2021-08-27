@@ -1,9 +1,11 @@
+from app.methods.SOG import filter_products_ids
 from .dependencies import config
 from .middlewares.keycloak import ValidateUserToken
 from fastapi import FastAPI
 from .routes import elastic, predictions
 from .models.actions import *
 from .methods.natural_languaje_processing import *
+import pickle
 
 
 # FastAPI initialization
@@ -25,7 +27,14 @@ app.include_router(predictions.router)
 
 # TESTING ZONE
 
+@app.get("/test")
+def test():
+    with open('app/files/products/data.pkl', 'rb') as f:
+        docs_dict = pickle.load(f)
+    asd = filter_products_ids([-3, 7000, 2, 45, 356], docs_dict)
+    return {'test': asd}
+
 # RUN COMMAND: $ uvicorn app.main:app --reload
-# $ update_products_script.py
-# $ update_recommender_script.py
+# $ python update_products_script.py
+# $ python update_recommender_script.py
 

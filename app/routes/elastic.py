@@ -1,6 +1,6 @@
 from app.methods.historical_queries import search_historic_queries
 from ..dependencies import config
-from ..methods.SOG import SOG_score_elastic
+from ..methods.SOG import SOG_score_elastic, calc_SOG_prof_ui_search, filter_products_ids
 from ..methods.natural_languaje_processing import *
 from elasticsearch import Elasticsearch
 import pickle
@@ -61,7 +61,7 @@ def get_products_search(search_text):
         'size': 100,
     }
 
-    historical_search = search_historic_queries(text= search_text, days_ago=1)
+    historical_search = search_historic_queries(text= search_text, days_ago=100)
     response = es.search(index="spree-products", body=search_dict)['hits']['hits']
 
     #Checking if elastic result has data, if it's the case, we extract it
@@ -76,18 +76,24 @@ def get_products_search(search_text):
     if len(historical_search) > 0 and set(historical_search[0]['results_ids']) == set(elastic_result): return { 'results_ids': historical_search[0]['results_ids'], 'historical': True, 'error': False }
     
     #If there's new data we run SOG
-    results_ids = []
-    SOG_response = []
-    SOG_response.append(response.pop(0))
-    results_ids.append(int(SOG_response[-1]['_id']))
+
     with open('app/files/products/data.pkl', 'rb') as f:
         docs_dict = pickle.load(f)
     with open('app/files/products/similarities_matrix.pkl', 'rb') as f:
         sim_matrix = pickle.load(f)
+
+    historical_search = filter_products_ids(historical_search[0]['results_ids'], docs_dict) #Change ids to local_index and filters new/erased items
+
+    prof_ui = calc_SOG_prof_ui_search(historical_search, elastic_result, sim_matrix, docs_dict)
+
+    results_ids = []
+    SOG_response = []
+    SOG_response.append(response.pop(0))
+    results_ids.append(int(SOG_response[-1]['_id']))
     for _ in range(len(response)):  # iterate through top docs ---- SOG
         max_score = -1
         for doc in response:
-            score = SOG_score_elastic(doc, SOG_response, docs_dict, sim_matrix)
+            score = SOG_score_elastic(doc, SOG_response, docs_dict, sim_matrix, prof_ui)
             if score > max_score:
                 max_score = score
                 best_doc = doc
