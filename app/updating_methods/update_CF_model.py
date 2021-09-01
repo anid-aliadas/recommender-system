@@ -62,7 +62,7 @@ def update_model(user_token):
     }
     params = {
         "page": 0,
-        "per_page": 100,
+        "per_page": 1000,
     }
     response = ""
     users_actions_dict = {}

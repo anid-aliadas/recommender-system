@@ -82,9 +82,11 @@ def get_products_search(search_text):
     with open('app/files/products/similarities_matrix.pkl', 'rb') as f:
         sim_matrix = pickle.load(f)
 
-    historical_search = filter_products_ids(historical_search[0]['results_ids'], docs_dict) #Change ids to local_index and filters new/erased items
+    prof_ui = {}
+    if len(historical_search) > 0:
+        historical_search = filter_products_ids(historical_search[0]['results_ids'], docs_dict) #Change ids to local_index and filters new/erased items
+        prof_ui = calc_SOG_prof_ui_search(historical_search, elastic_result, sim_matrix, docs_dict)
 
-    prof_ui = calc_SOG_prof_ui_search(historical_search, elastic_result, sim_matrix, docs_dict)
 
     results_ids = []
     SOG_response = []
@@ -102,16 +104,45 @@ def get_products_search(search_text):
     return { 'results_ids': results_ids, 'historical': False, 'error': False }
     
 
-@router.get("/vendors/new")
-def get_new_vendors(sample_size:int = 3, n_newest:int = 10):
+@router.get("/products/search/normal/{search_text}")
+def get_new_vendors(search_text):
     search_dict = {
-        'sort': [
-            { "created_at" : "desc" }
-        ],
         'query': {
-            'match_all': {},
+            'bool': {
+                'should': [
+                    {
+                        'nested': {
+                            'path': "taxons",
+                            'query': {
+                                'multi_match': {
+                                    'query': search_text,
+                                    'fields': ['*.name']
+                                }
+                            }
+                        }
+                    },
+                    {
+                        'multi_match': {
+                            'query': search_text,
+                            'fields': ['name', 'description', 'vendor.name']
+                        }
+                    },
+                ],
+                'must_not': {
+                    'nested': {
+                        'path': "taxons",
+                        'query':{
+                            'match': {
+                                "taxons.id": 305
+                            }
+                        }
+                    }
+                }
+            }
         },
-        'size': n_newest,
+        'size': 100,
     }
-    response = es.search(index="spree-vendors", body=search_dict)["hits"]["hits"]
-    return random.sample(response, sample_size)
+    response = es.search(index="spree-products", body=search_dict)['hits']['hits']
+    elastic_result = []
+    for doc in response: elastic_result.append(doc['_source']['id'])
+    return { 'results_ids': elastic_result }

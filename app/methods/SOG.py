@@ -23,10 +23,10 @@ def SOG_score_elastic(doc, candidate_set, docs_dict, sim_matrix, prof_ui):
     #comparar doc_vendor contra todos los vendors del candidate_Set
     #Si no lo encontramos (doc_vendor) se le asigna prob V.import
     #Si lo encontramos se le asigna prob V/n+1 donde n es la cantidad de apariciones en candidate_Set
-    score += ES_SOG_REL_PARAM_W     * product_score                \
-          +  ES_SOG_DIV_PARAM_W     * (div_iB/len(candidate_set))  \
-          +  ES_SOG_PROF_UI_PARAM_W * prof_ui[int(doc['_id'])]     \
-          +  ES_SOG_UNPOP_I_PARAM_W * unpop_i                      \
+    score += ES_SOG_REL_PARAM_W     * product_score                     \
+          +  ES_SOG_DIV_PARAM_W     * (div_iB/len(candidate_set))       \
+          +  ES_SOG_PROF_UI_PARAM_W * prof_ui.get(int(doc['_id']), 0)   \
+          +  ES_SOG_UNPOP_I_PARAM_W * unpop_i                           \
           +  ES_SOG_DIV_VEN_PARAM_W * div_vendor_iB
     return score
 
