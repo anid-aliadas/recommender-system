@@ -12,3 +12,4 @@ dnspython
 scipy
 spacy
 pandas
+matplotlib

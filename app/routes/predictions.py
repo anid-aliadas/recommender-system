@@ -142,9 +142,8 @@ def recommend_to_user(user_id: str):
         UNIQUE_ITEMS = RS.unique_items
         user_index = UNIQUE_USERS.index(user_id)
 
-        print(RS.X.todense())
-
         out = RS.recommend(user_index, top_users=2, top_items=10, alpha=1, limits=None)
+
         SOG_prof_ui = calc_SOG_prof_ui(out['r'], [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], RS.items_similarity_matrix)
 
         #out = RS.recommend(UNIQUE_USERS.index(user_id), top_users=5, top_items=5, alpha=1, limits=None) VERSION PARA EL RELEASE
@@ -167,6 +166,7 @@ def recommend_to_user(user_id: str):
             SOG_response.append(out['r'].pop(out['r'].index(best_item)))
         
         return { 'response': response }
+
 
     else: return { 'response': [] }
 

@@ -28,8 +28,9 @@ def accent_mark_removal(text):
     text_words = [word for word in text_words if word not in stopwords]
     return ' '.join(text_words)
 
-def get_top_vocabulary(X, vec, top_n):
+def get_top_vocabulary(X, vec, words_percentage):
     sum_corpus_words = X.sum(axis=0)
+    top_n = round(sum_corpus_words.shape[1] * words_percentage)
     words_freq = [(word, sum_corpus_words[0, idx]) for word, idx in vec.vocabulary_.items()]
     words_freq = sorted(words_freq, key = lambda x: x[1], reverse=True)
     return [word for word, freq in words_freq[:top_n]]

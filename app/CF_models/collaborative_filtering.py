@@ -169,7 +169,6 @@ class Recommender(object):
         # Choose top users to recommend (plus 1, the target user is always selected)
         top_user_indices = heapq.nlargest(top_users+1, range(len(W)), W.take)
 
-        print(top_user_indices)
         # Remove target user from recommenders
         top_user_indices.remove(row_i)
         
