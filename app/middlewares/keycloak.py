@@ -30,7 +30,7 @@ class ValidateUserToken(BaseHTTPMiddleware):
             request.state.user_data = token_info
             response = await call_next(request)
             return response
-        except (JWTError, KeyError):
+        except (JWTError):
             return JSONResponse(
                 status_code=401,
                 content="Usted no está autorizado para realizar la presente consulta"
