@@ -1,11 +1,18 @@
 from ..dependencies import config
 
-def SOG_score_elastic(doc, candidate_set, docs_dict, sim_matrix, prof_ui):
-    ES_SOG_REL_PARAM_W = float(config('ES_SOG_REL_PARAM_W'))
-    ES_SOG_DIV_PARAM_W = float(config('ES_SOG_DIV_PARAM_W'))
-    ES_SOG_PROF_UI_PARAM_W = float(config('ES_SOG_PROF_UI_PARAM_W'))
-    ES_SOG_UNPOP_I_PARAM_W = float(config('ES_SOG_UNPOP_I_PARAM_W'))
-    ES_SOG_DIV_VEN_PARAM_W = float(config('ES_SOG_DIV_VEN_PARAM_W'))
+def SOG_score_elastic(doc, candidate_set, docs_dict, sim_matrix, prof_ui, SOG_params_weights):
+    if SOG_params_weights:
+        ES_SOG_REL_PARAM_W = SOG_params_weights[0]
+        ES_SOG_DIV_PARAM_W = SOG_params_weights[1]
+        ES_SOG_PROF_UI_PARAM_W = SOG_params_weights[2]
+        ES_SOG_UNPOP_I_PARAM_W = SOG_params_weights[3]
+        ES_SOG_DIV_VEN_PARAM_W = SOG_params_weights[4]
+    else:
+        ES_SOG_REL_PARAM_W = float(config('ES_SOG_REL_PARAM_W'))
+        ES_SOG_DIV_PARAM_W = float(config('ES_SOG_DIV_PARAM_W'))
+        ES_SOG_PROF_UI_PARAM_W = float(config('ES_SOG_PROF_UI_PARAM_W'))
+        ES_SOG_UNPOP_I_PARAM_W = float(config('ES_SOG_UNPOP_I_PARAM_W'))
+        ES_SOG_DIV_VEN_PARAM_W = float(config('ES_SOG_DIV_VEN_PARAM_W'))
     score = 0
     div_iB = 0
     n = 0

@@ -6,7 +6,7 @@ from .routes import elastic, predictions
 from .models.actions import *
 from .methods.natural_languaje_processing import *
 import pickle
-
+import os
 
 # FastAPI initialization
 
@@ -27,12 +27,14 @@ app.include_router(predictions.router)
 
 # TESTING ZONE
 
-@app.get("/test")
+@app.get("/test1")
 def test():
-    with open('app/files/products/data.pkl', 'rb') as f:
-        docs_dict = pickle.load(f)
-    asd = filter_products_ids([-3, 7000, 2, 45, 356], docs_dict)
-    return {'test': asd}
+    test = config("TOP_N_VOCAB_WORDS_PERCENTAGE")
+    with open(".env", "a") as file:
+        file.write("\nASD=69")
+        file.close()
+    return test
+
 
 # RUN COMMAND: $ uvicorn app.main:app --reload
 # $ python update_products_script.py
