@@ -58,18 +58,23 @@ def get_products_search(search_text: str, testing: bool = False, SOG_params_weig
     }
     historical_search = search_historic_queries(text= search_text, days_ago= config('HISTORICAL_QUERIES_DAYS_AGO'))
     response = es.search(index="spree-products", body=search_dict)['hits']['hits']
+
     elastic_result = []
+    max_rel_score = response[0]["_score"]
     #Checking if elastic result has data, if it's the case, we extract it
     if len(response) == 0: return { 'results_ids': [], 'historical': False, 'error': False }
+    else:
+        for doc in response: 
+            doc["_score"] = doc["_score"]/max_rel_score
+            elastic_result.append(doc['_source']['id'])
+
     if not testing: #We always run SOG in testing enviroment, except if the response is empty
-        for doc in response: elastic_result.append(doc['_source']['id'])
         #Checking for errors in historical search and returning just the elastic result
         if isinstance(historical_search, str): return { 'results_ids': elastic_result, 'historical': False, 'error': historical_search } 
         #If the historical search and the elastic one are the same we do not run SOG
         if len(historical_search) > 0 and set(historical_search[0]['results_ids']) == set(elastic_result): return { 'results_ids': historical_search[0]['results_ids'], 'historical': True, 'error': False }
         
     #If there's new data we run SOG
-
     with open('app/files/products/data.pkl', 'rb') as f:
         docs_dict = pickle.load(f)
     with open('app/files/products/similarities_matrix.pkl', 'rb') as f:
@@ -79,7 +84,6 @@ def get_products_search(search_text: str, testing: bool = False, SOG_params_weig
     if len(historical_search) > 0:
         historical_search = filter_products_ids(historical_search[0]['results_ids'], docs_dict) #Change ids to local_index and filters new/erased items
         prof_ui = calc_SOG_prof_ui_search(historical_search, elastic_result, sim_matrix, docs_dict)
-
 
     results_ids = []
     SOG_response = []
