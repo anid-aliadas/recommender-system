@@ -60,7 +60,6 @@ def get_products_search(search_text: str, testing: bool = False, SOG_params_weig
     response = es.search(index="spree-products", body=search_dict)['hits']['hits']
 
     elastic_result = []
-    
     #Checking if elastic result has data, if it's the case, we extract it
     if len(response) == 0: return { 'results_ids': [], 'historical': False, 'error': False }
     else:
