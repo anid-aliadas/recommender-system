@@ -38,7 +38,7 @@ def get_products_search(search_text: str, testing: bool = False, SOG_params_weig
                     {
                         'multi_match': {
                             'query': search_text,
-                            'fields': ['name', 'description', 'vendor.name']
+                            'fields': ['name^3', 'description', 'vendor.name']
                         }
                     },
                 ],
@@ -58,7 +58,7 @@ def get_products_search(search_text: str, testing: bool = False, SOG_params_weig
     }
     historical_search = search_historic_queries(text= search_text, days_ago= config('HISTORICAL_QUERIES_DAYS_AGO'))
     response = es.search(index="spree-products", body=search_dict)['hits']['hits']
-
+    print(response)
     elastic_result = []
     #Checking if elastic result has data, if it's the case, we extract it
     if len(response) == 0: return { 'results_ids': [], 'historical': False, 'error': False }
