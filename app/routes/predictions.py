@@ -68,7 +68,7 @@ def recommend_products(user_id: str):
         UNIQUE_ITEMS = RS.unique_items
         user_index = UNIQUE_USERS.index(user_id)
 
-        out = RS.recommend(user_index, top_users=2, top_items=10, alpha=1, limits=None)
+        out = RS.recommend(user_index, top_users=10, top_items=10, alpha=1, beta=0.7, limits=None)
 
         SOG_prof_ui = calc_SOG_prof_ui(out['r'], [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], RS.items_similarity_matrix)
 
@@ -107,13 +107,13 @@ def recommend_vendors(user_id: str):
         UNIQUE_ITEMS = RS.unique_items
         user_index = UNIQUE_USERS.index(user_id)
 
-        out = RS.recommend(user_index, top_users=2, top_items=10, alpha=1, limits=None)
+        out = RS.recommend(user_index, top_users=10, top_items=10, alpha=1, beta=0.7, limits=None)
 
-        SOG_prof_ui = calc_SOG_prof_ui(out['r'], [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], RS.items_similarity_matrix)
 
         #out = RS.recommend(UNIQUE_USERS.index(user_id), top_users=5, top_items=5, alpha=1, limits=None) VERSION PARA EL RELEASE
-
-        ##### SOG #####
+        return { 'response': out['r'] }
+        """ ##### SOG #####
+        SOG_prof_ui = calc_SOG_prof_ui(out['r'], [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], RS.items_similarity_matrix)
         #original_response = out['r'][:]
 
         response = []
@@ -130,7 +130,7 @@ def recommend_vendors(user_id: str):
             response.append(UNIQUE_ITEMS[out['r'][out['r'].index(best_item)][0]])
             SOG_response.append(out['r'].pop(out['r'].index(best_item)))
         
-        return { 'response': response }
+        return { 'response': response } """
 
 
     else: return { 'response': [] }

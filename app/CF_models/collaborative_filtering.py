@@ -102,13 +102,13 @@ class Recommender(object):
     '''
     Collaborative filtering recommender
     '''
-    def __init__(self, X, X_i, normalize=False, normalize_std=False):
+    def __init__(self, X, XI, normalize=False, normalize_std=False):
         '''
         X: np.array where rows are users and columns are items
         normalize: bool whether to normalize the matrix or not
         '''
         self.X = X # dataset
-        self.X_i = X_i # users interests
+        self.XI = XI # users interests
         self.users_similarity_matrix = cosine_similarity(X)
         self.items_similarity_matrix = cosine_similarity(X.T)
         self.unpop = X.sum(axis=0)/X.shape[0]
@@ -141,7 +141,7 @@ class Recommender(object):
         self.row_norms = np.sqrt(np.squeeze(np.asarray(self.X.power(2).sum(1))))
         
     
-    def recommend(self, row_i, top_users=3, top_items=3, alpha=1, limits=(0,5)):
+    def recommend(self, row_i, top_users=3, top_items=3, alpha=1, beta=0.7, limits=(0,5)):
         '''
         Calculates recommended items for user row_i in matrix X
         
@@ -156,7 +156,14 @@ class Recommender(object):
         # Calculate cosine distance to all users in the dataset
         Y = np.squeeze(np.asarray((self.X * self.X[row_i].T).todense()))
         Z = self.row_norms * self.row_norms[row_i]
-        W = np.true_divide(Y, Z, out=np.zeros(Y.shape), where=Z!=0)
+        cos_sim = np.true_divide(Y, Z, out=np.zeros(Y.shape), where=Z!=0)
+
+        # Calculate Jaccard similarity to all users in the interests matrix
+        A = np.squeeze(np.asarray((self.XI * self.XI[row_i].T).todense()))
+        B = np.squeeze(np.asarray(self.XI.sum(1) + self.XI[row_i].sum(1))) - A
+        jacc_sim = 1 - np.true_divide(A, B, out=np.ones(A.shape), where=B!=0)
+
+        W =  beta * cos_sim + (1 - beta) * jacc_sim
         # Choose top users to recommend (plus 1, the target user is always selected)
         top_user_indices = heapq.nlargest(top_users+1, range(len(W)), W.take)
 
