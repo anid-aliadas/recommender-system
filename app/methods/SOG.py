@@ -57,7 +57,6 @@ def calc_SOG_prof_ui(top_items, user_data, items_similarity_matrix):
         SOG_prof_ui[i_item] = prof_ui/n
     return SOG_prof_ui
 
-
 def SOG_score_predictions(item_data, candidate_set, prof_ui, unpop_i, items_similarity_matrix):
     RS_SOG_REL_PARAM_W = float(config('RS_SOG_REL_PARAM_W'))
     RS_SOG_DIV_PARAM_W = float(config('RS_SOG_DIV_PARAM_W'))
@@ -73,3 +72,22 @@ def SOG_score_predictions(item_data, candidate_set, prof_ui, unpop_i, items_simi
           +  RS_SOG_PROF_UI_PARAM_W * prof_ui \
           +  RS_SOG_UNPOP_I_PARAM_W * unpop_i 
     return score
+
+def SOG_predictions(out, SOG_prof_ui, RS):
+    SOG_response = []
+    SOG_response.append(out['r'].pop(0))
+    for i in range(len(out['r'])):
+        max_score = -1
+        for item_data in out['r']:
+            score = SOG_score_predictions(
+                item_data, 
+                SOG_response, 
+                SOG_prof_ui[item_data[0]], 
+                RS.unpop[0, item_data[0]], 
+                RS.items_similarity_matrix
+            )
+            if score > max_score:
+                max_score = score
+                best_item = item_data
+        SOG_response.append(out['r'].pop(out['r'].index(best_item)))
+    return SOG_response
