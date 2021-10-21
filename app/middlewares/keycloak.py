@@ -1,6 +1,7 @@
 from ..dependencies import config
 from starlette.middleware.base import BaseHTTPMiddleware
 from keycloak import KeycloakOpenID
+from ..dependencies import obtain_admin_privilege_keycloak
 from jose import JWTError
 from fastapi.responses import JSONResponse
 
@@ -35,3 +36,8 @@ class ValidateUserToken(BaseHTTPMiddleware):
                 status_code=401,
                 content="Usted no está autorizado para realizar la presente consulta"
             )
+
+def get_keycloak_users():
+    keycloak_admin = obtain_admin_privilege_keycloak()
+    users = keycloak_admin.get_users({})
+    return [user["id"] for user in users]

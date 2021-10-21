@@ -102,12 +102,13 @@ class Recommender(object):
     '''
     Collaborative filtering recommender
     '''
-    def __init__(self, X, normalize=False, normalize_std=False):
+    def __init__(self, X, X_i, normalize=False, normalize_std=False):
         '''
         X: np.array where rows are users and columns are items
         normalize: bool whether to normalize the matrix or not
         '''
         self.X = X # dataset
+        self.X_i = X_i # users interests
         self.users_similarity_matrix = cosine_similarity(X)
         self.items_similarity_matrix = cosine_similarity(X.T)
         self.unpop = X.sum(axis=0)/X.shape[0]
@@ -116,16 +117,10 @@ class Recommender(object):
         self.unique_users = []
         self.unique_items = []
 
-        self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1),(X!=0).sum(1)))) # mean rating for all users
-        #self.Xmean = np.squeeze(np.asarray(np.true_divide(X.sum(1), X.shape[1])))
-        
-        #EXISTE OTRA ALTERNATIVA? ESTO
-
-        self.Xmean2 = np.squeeze(np.asarray(np.true_divide(X.power(2).sum(1),(X!=0).sum(1)))) # mean of squared values for all users
-        #self.Xmean2 = np.squeeze(np.asarray(np.true_divide(X.power(2).sum(1), X.shape[1])))
+        self.Xmean = np.squeeze(np.asarray(np.true_divide( X.sum(1), (X!=0).sum(1), out=np.zeros((X.shape[0], 1)), where=(X!=0).sum(1) != 0 ))) # mean rating for all users
+        self.Xmean2 = np.squeeze(np.asarray(np.true_divide( X.power(2).sum(1),(X!=0).sum(1), out=np.zeros((X.shape[0], 1)), where=(X!=0).sum(1) != 0 ))) # mean of squared values for all users
         self.std = np.sqrt(self.Xmean2 - self.Xmean**2)# [1/i if i != 0 else float('inf') for i in np.sqrt(self.Xmean2 - self.Xmean**2)] # sqrt(E[X**2] - E[X]**2) ; inverted as they will be used for normalizing 
         
-
         self.normalized = False
         self.normalized_std = normalize_std
         # The mask is a matrix with the same shape to the dataset
@@ -160,17 +155,13 @@ class Recommender(object):
         '''
         # Calculate cosine distance to all users in the dataset
         Y = np.squeeze(np.asarray((self.X * self.X[row_i].T).todense()))
-
-        
-
         Z = self.row_norms * self.row_norms[row_i]
         W = np.true_divide(Y, Z, out=np.zeros(Y.shape), where=Z!=0)
-        
         # Choose top users to recommend (plus 1, the target user is always selected)
         top_user_indices = heapq.nlargest(top_users+1, range(len(W)), W.take)
 
         # Remove target user from recommenders
-        top_user_indices.remove(row_i)
+        if row_i in top_user_indices: top_user_indices.remove(row_i)
         
         subX = self.X[top_user_indices,:] # Submatrix with recommenders
         subW = W[top_user_indices] # Submatrix with similarities to recommenders

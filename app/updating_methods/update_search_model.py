@@ -54,8 +54,11 @@ def vectorize_products():
     X = cosine_similarity(X) # The value in the i-th row and j-th column of the result is the cosine similarity between the i-th and j-th row of array.
     with open('app/files/products/data.pkl', 'wb') as f:
         pickle.dump(docs_dict, f)
+        f.close()
     with open('app/files/products/top_vocabulary.pkl', 'wb') as f:
         pickle.dump(top_vocabulary, f)
+        f.close()
     with open('app/files/products/similarities_matrix.pkl', 'wb') as f:
         pickle.dump(X, f)
-    return "Products model updated"
+        f.close()
+    return "Products search model updated"

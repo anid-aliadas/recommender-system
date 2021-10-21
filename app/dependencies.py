@@ -1,8 +1,14 @@
 from starlette.config import Config
+from keycloak import KeycloakAdmin
 
 config = Config('.env')
 
-'''
-Aquí van las dependencias que usan la mayoría si no todos los paquetes y módulos.
-Añadí el que esta en este instante para utilizar las variables de entorno de forma más sencilla en otros módulos
-'''
+# Seteo de administrador de Keycloak
+
+def obtain_admin_privilege_keycloak():
+    keycloak_admin = KeycloakAdmin(server_url=config('OIDC_ISSUER'),
+                                   client_id=config('OIDC_CLIENT_ID'),
+                                   realm_name=config('OIDC_REALM'),
+                                   client_secret_key=config('OIDC_CLIENT_SECRET'),
+                                   verify=True)
+    return keycloak_admin
