@@ -1,7 +1,6 @@
 from ..dependencies import config
 from ..methods.natural_languaje_processing import *
 import pickle
-from ..models.actions import *
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer

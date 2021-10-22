@@ -4,7 +4,6 @@ from ..methods.SOG import SOG_score_elastic, calc_SOG_prof_ui_search, filter_pro
 from ..methods.natural_languaje_processing import *
 from elasticsearch import Elasticsearch
 import pickle
-from ..models.actions import *
 from fastapi import APIRouter, Query
 from typing import List
 router = APIRouter()

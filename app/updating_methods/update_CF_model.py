@@ -1,7 +1,6 @@
 import requests
 import pickle
 from datetime import datetime
-from app.models.actions import ActionOverQuery
 from scipy.stats import logistic
 import scipy.sparse as sp
 from ..dependencies import config
