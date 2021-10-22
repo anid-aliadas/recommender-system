@@ -1,15 +1,12 @@
 uvicorn
 fastapi
-python-keycloak
+python-keycloak==0.25
 elasticsearch
 sklearn
 numpy
 nltk
 unidecode
-motor
-odmantic
 dnspython
 scipy
 spacy
 pandas
-matplotlib
