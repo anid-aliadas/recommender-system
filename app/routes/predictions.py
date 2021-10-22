@@ -12,7 +12,7 @@ with open("app/files/RS/products_recommender.pkl", "rb") as file:
     P_RS = pickle.load(file)
     file.close()
 
-@router.get("/recommender")
+@router.get("/recommender/")
 def recommend_products(user_id: str):
     if user_id in P_RS.unique_users:
         users_actions_dict = P_RS.users_data 
