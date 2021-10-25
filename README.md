@@ -135,6 +135,11 @@ Esta se puede encontrar en [host]/docs
 - __TOP_N_VOCAB_WORDS_PERCENTAGE__: Porcentaje del total de palabras del corpus a utilizar como top_n palabras más frecuentes.
 - __HISTORICAL_QUERIES_DAYS_AGO__: Días atrás a considerar en el historial de queries para el algoritmo ES_SOG
 
+## Trabajo pendiente y/o mejoras
+
+- Mover las rutas de búsqueda normales (tiendas y productos con y sin filtros) al sistema recomendador, actualmente se encuentran en el servicio de Spree.
+- Mejorar escalabilidad del algoritmo Collaborative Filtering, si la aplicación llega a crecer mucho comenzará a requerir mucha memoria y tiempo para ejecutarse.
+
 ## Anexos
 
 - Colección de Postman: https://www.getpostman.com/collections/e6e0f26eb92189072a20
