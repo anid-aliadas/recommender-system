@@ -94,7 +94,7 @@ Esta se puede encontrar en [host]/docs
 - __Formato respuesta__: {  
 &nbsp;&nbsp;&nbsp;&nbsp; 'results_ids': __array[products_ids]__,  
 &nbsp;&nbsp;&nbsp;&nbsp; 'historical': __bool(is_historical)__, # If the data was retrieved from a past query (SOG didn't run)  
-&nbsp;&nbsp;&nbsp;&nbsp; 'error': __bool(false)__ || __string(error)__ # False if no error, else returns an error description 
+&nbsp;&nbsp;&nbsp;&nbsp; 'error': __bool(false)__ || __string(error)__ # False if no error, else returns an error description  
 }
 
 #### Products recommender: [host]/recommender/products
