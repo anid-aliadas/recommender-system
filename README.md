@@ -67,10 +67,10 @@ Sin embargo para configurar su uso se deben añadir unas variables de entorno a 
 
 El formato se encuentra en .env.example, las variables de entorno a observar son:
 
-- OIDC_CLIENT_ID: id de cliente de aplicación a levantar (consultar credenciales a adminstrador).
-- OIDC_CLIENT_SECRET clave secreta de aplicación a levantar (consultar credenciales a adminstrador).
-- OIDC_ISSUER: url de aplicación levantada de keycloak (debería ser https://keycloak.aliad.as/auth/)
-- OIDC_REALM: realm asociada a aplicación (debería ser "aliadas")
+- __OIDC_CLIENT_ID__: id de cliente de aplicación a levantar (consultar credenciales a adminstrador).
+- __OIDC_CLIENT_SECRET__: clave secreta de aplicación a levantar (consultar credenciales a adminstrador).
+- __OIDC_ISSUER__: url de aplicación levantada de keycloak (debería ser https://keycloak.aliad.as/auth/)
+- __OIDC_REALM__: realm asociada a aplicación (debería ser "aliadas")
 
 Notar que si se desea solo probar las rutas sin token de autorización, solo debes poner
 en la variable de entorno APP_ENVIRONMENT=development, en el caso contrario, hay que poner
@@ -137,10 +137,10 @@ Esta se puede encontrar en [host]/docs
 
 ## Anexos
 
+- Colección de Postman: https://www.getpostman.com/collections/e6e0f26eb92189072a20
 - Docs de FastAPI: https://fastapi.tiangolo.com/
 
 ## Contacto
-
-- Discord: Advent#7908
-- Whatsapp: +56982733475
-
+- Discord Brant#2074
+- chamorrobrant@gmail.com
+- +56 9 852 72 168
