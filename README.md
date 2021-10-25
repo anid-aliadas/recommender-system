@@ -1,30 +1,4 @@
-# fastapi-service-template
-
-Este repositorio contiene un proyecto vacío de FastAPI pero con las configuraciones recurrentes
-que se deben usar en los servicios a desarrollar a futuro.
-
-Además posee un formato de paquetes que permite ordenar el código en middlewares,
-modelos y rutas (pueden surgir más paquetes según se vaya revisando lo práctico 
-de este formato)
-
-Este se irá actualizando (y refactorizando) en función de los requisitos recurrentes 
-que tendrán los servicios a desarrollar.
-
-## Ejemplos de modelos y rutas
-
-Se pueden ver ejemplos de estos en algún proyecto derivado de este repositorio
-
-(Por ejemplo este: https://github.com/anid-aliadas/fastapi-action-logs-service)
-
-Aún asi si surgen dudas, se puede consultar a la documentación del framework
-(adjunto en anexos), o a mi (ver sección contacto).
-
-## Configuraciones
-
-El presente proyecto presenta configuraciones para las siguientes tecnologías.
-
-- Docker
-- Keycloak
+# Aliadas recommender system
 
 ## Ejecución de proyecto
 
@@ -33,13 +7,22 @@ se debe de hacer los siguientes pasos
 
 ```
 # Configurar variables de entorno y crear .env
-$ cp .env.example .env
+- Linux y derivados
+  $ cp .env.example .env
+
+- Windows
+  $ copy .env.example .env
 
 # Instalar paquetes utilizados por el proyecto
-$ pip install -r requirements.txt
+  $ pip install -r requirements.txt
+
+# Correr scripts para actualizar los modelos
+  $ python update_products_script.py
+  ...
+  $ python update_recommender_script.py
 
 # Correr aplicación (por defecto escucha en puerto 8000)
-$ uvicorn app.main:app --reload
+  $ uvicorn app.main:app --reload
 ```
 
 después de correr el último comando, debería devolver esto por consola
@@ -93,14 +76,18 @@ Notar que si se desea solo probar las rutas sin token de autorización, solo deb
 en la variable de entorno APP_ENVIRONMENT=development, en el caso contrario, hay que poner
 production.
 
-
-
 ## Documentación de las rutas definidas
 
 La documentación se genera automáticamente con el estándar OpenAPI 3.0.
 
-Esta se puede encontrar en [dirección_de_host]/docs (asumiendo que la aplicación
-está en modo de desarrollo)
+production_host = https://kong.aliad.as/recommender-system
+local_host = http://127.0.0.1:8000
+
+Esta se puede encontrar en [host]/docs
+
+### Descripción de las rutas
+
+...
 
 ## Anexos
 
