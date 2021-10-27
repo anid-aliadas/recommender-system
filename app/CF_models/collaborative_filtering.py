@@ -161,7 +161,7 @@ class Recommender(object):
         # Calculate Jaccard similarity to all users in the interests matrix
         A = np.squeeze(np.asarray((self.XI * self.XI[row_i].T).todense()))
         B = np.squeeze(np.asarray(self.XI.sum(1) + self.XI[row_i].sum(1))) - A
-        jacc_sim = 1 - np.true_divide(A, B, out=np.ones(A.shape), where=B!=0)
+        jacc_sim = np.true_divide(A, B, out=np.zeros(A.shape), where=B!=0)
 
         W =  beta * cos_sim + (1 - beta) * jacc_sim
         # Choose top users to recommend (plus 1, the target user is always selected)
