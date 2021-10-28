@@ -121,7 +121,6 @@ def get_users_vendors_actions(vendors_data, user_token):
     params = {
         "page": 0,
         "per_page": 1000,
-        "days_ago": 30
     }
     response = ""
     users_actions_dict = {}

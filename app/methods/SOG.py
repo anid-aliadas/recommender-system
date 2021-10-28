@@ -48,13 +48,14 @@ def calc_SOG_prof_ui_search(historical_items_ids, search_items_ids, items_simila
     return SOG_prof_ui
 
 def calc_SOG_prof_ui(top_items, user_data, items_similarity_matrix):
-    SOG_prof_ui = {}
     n = len(user_data)
-    for i_item, _ in top_items:
-        prof_ui = 0
-        for u_item in user_data:
-            prof_ui += (1 - items_similarity_matrix[i_item][u_item])
-        SOG_prof_ui[i_item] = prof_ui/n
+    SOG_prof_ui = {}
+    if n > 0:
+        for i_item, _ in top_items:
+            prof_ui = 0
+            for u_item in user_data:
+                prof_ui += (1 - items_similarity_matrix[i_item][u_item])
+            SOG_prof_ui[i_item] = prof_ui/n
     return SOG_prof_ui
 
 def SOG_score_predictions(item_data, candidate_set, prof_ui, unpop_i, items_similarity_matrix):
@@ -82,7 +83,7 @@ def SOG_predictions(out, SOG_prof_ui, RS):
             score = SOG_score_predictions(
                 item_data, 
                 SOG_response, 
-                SOG_prof_ui[item_data[0]], 
+                SOG_prof_ui.get(item_data[0], 0), 
                 RS.unpop[0, item_data[0]], 
                 RS.items_similarity_matrix
             )

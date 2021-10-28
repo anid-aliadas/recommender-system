@@ -2,6 +2,7 @@ from app.methods.SOG import SOG_predictions, SOG_score_predictions, calc_SOG_pro
 from ..dependencies import config
 from fastapi import APIRouter
 import pickle
+import numpy as np
 
 router = APIRouter()
 
@@ -27,9 +28,11 @@ def recommend_products(user_id: str):
             beta = float(config('CF_COSINE_SIMILARITY_WEIGHT')), 
             limits = None
         )
+        if user_id in users_actions_dict:
+            user_data = [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]]
         SOG_prof_ui = calc_SOG_prof_ui(
             out['r'], 
-            [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], 
+            user_data, 
             P_RS.items_similarity_matrix
         )
         SOG_response = SOG_predictions(out, SOG_prof_ui, P_RS)
@@ -51,9 +54,12 @@ def recommend_products(user_id: str):
             beta = float(config('CF_COSINE_SIMILARITY_WEIGHT')), 
             limits = None
         )
+        user_data = []
+        if user_id in users_actions_dict:
+            user_data = [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]]
         SOG_prof_ui = calc_SOG_prof_ui(
             out['r'], 
-            [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], 
+            user_data, 
             P_RS.items_similarity_matrix
         )
         SOG_response = SOG_predictions(out, SOG_prof_ui, P_RS)
@@ -75,9 +81,12 @@ def recommend_vendors(user_id: str):
             beta = float(config('CF_COSINE_SIMILARITY_WEIGHT')), 
             limits = None
         )
+        user_data = []
+        if user_id in users_actions_dict:
+            user_data = [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]]
         SOG_prof_ui = calc_SOG_prof_ui(
             out['r'], 
-            [UNIQUE_ITEMS.index(i) for i in users_actions_dict[user_id]], 
+            user_data, 
             V_RS.items_similarity_matrix
         )
         SOG_response = SOG_predictions(out, SOG_prof_ui, V_RS)
