@@ -3,6 +3,7 @@ from ..dependencies import config
 from fastapi import APIRouter
 import pickle
 import numpy as np
+import requests
 
 router = APIRouter()
 
@@ -12,6 +13,37 @@ with open("app/files/RS/vendors_recommender.pkl", "rb") as file:
 with open("app/files/RS/products_recommender.pkl", "rb") as file:
     P_RS = pickle.load(file)
     file.close()
+
+def validate_response(response, type):
+    validated_response = []
+    headers = {
+        "X-Spree-Token": config('SPREE_API_KEY')
+    } 
+    params = {
+        "page": 0,
+        "per_page": 1000,
+        "excluded_taxon_ids[]": 305,
+    }
+    if type == 'products':
+        url = config('SPREE_PRODUCTS_URL')
+        all_products = []
+        r = requests.get(url, headers=headers, params=params).json()['response']
+        while( not isinstance(r, str) and r != [] ):
+            all_products += [product["_source"]["id"] for product in r]
+            params["page"] += 1
+            r = requests.get(url, headers=headers, params=params).json()['response']
+        validated_response = [id for id in response if id in all_products]
+    else:
+        params['page'] = 1 #la primera pagina de tiendas es la 1, la 0 es igual a la 1 por default -.----
+        url = config('SPREE_VENDORS_URL')
+        all_stores = []
+        r = requests.get(url, headers=headers, params=params).json()["vendors"]
+        while( not isinstance(r, str) and r != [] ):
+            all_stores += [vendor['id'] for vendor in r]
+            params["page"] += 1
+            r = requests.get(url, headers=headers, params=params).json()["vendors"]
+        validated_response = [id for id in response if id in all_stores]
+    return validated_response
 
 @router.get("/recommender")
 def recommend_products(user_id: str):
@@ -36,7 +68,7 @@ def recommend_products(user_id: str):
             P_RS.items_similarity_matrix
         )
         SOG_response = SOG_predictions(out, SOG_prof_ui, P_RS)
-        return { 'response': [UNIQUE_ITEMS[id] for id, score in SOG_response] }
+        return { 'response': validate_response([UNIQUE_ITEMS[id] for id, score in SOG_response], 'products') }
     else: return { 'response': [] }
 
 @router.get("/recommender/products")
@@ -62,8 +94,10 @@ def recommend_products(user_id: str):
             user_data, 
             P_RS.items_similarity_matrix
         )
+
         SOG_response = SOG_predictions(out, SOG_prof_ui, P_RS)
-        return { 'response': [UNIQUE_ITEMS[id] for id, score in SOG_response] }
+
+        return { 'response': validate_response([UNIQUE_ITEMS[id] for id, score in SOG_response], 'products') }
     else: return { 'response': [] }
 
 @router.get("/recommender/vendors")
@@ -90,5 +124,5 @@ def recommend_vendors(user_id: str):
             V_RS.items_similarity_matrix
         )
         SOG_response = SOG_predictions(out, SOG_prof_ui, V_RS)
-        return { 'response': [UNIQUE_ITEMS[id] for id, score in SOG_response] }
+        return { 'response': validate_response([UNIQUE_ITEMS[id] for id, score in SOG_response], 'vendors') }
     else: return { 'response': [] }
