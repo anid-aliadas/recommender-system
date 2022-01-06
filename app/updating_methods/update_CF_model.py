@@ -19,7 +19,10 @@ es = Elasticsearch(
 )
 
 def temporalRank(timestamp):
-    days = (datetime.now() - datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")).days
+    try:
+        days = (datetime.now() - datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")).days
+    except:
+        days = (datetime.now() - datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")).days
     score = lambda x: max(round((1-logistic.cdf(x/3, loc=5, scale=1))*5, 0), 0.001)
 
     return score(days)
@@ -167,7 +170,7 @@ def get_stores_data():
         "X-Spree-Token": config('SPREE_API_KEY')
     } 
     params = {
-        "page": 0,
+        "page": 1,
         "per_page": 1000,
         "excluded_taxon_ids[]": 305,
     }

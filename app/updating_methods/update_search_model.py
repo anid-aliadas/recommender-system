@@ -54,7 +54,7 @@ def vectorize_products():
 
     print("*    6/8 - Calculating SOG 'unpop' parameter for the vectorization matrix")
     for doc_id in docs_dict:
-        docs_dict[doc_id]['unpop'] = len(np.intersect1d(docs_dict[doc_id]['cleaned_vocabulary'], top_vocabulary))/len(top_vocabulary)
+        docs_dict[doc_id]['unpop'] = 1 - len(np.intersect1d(docs_dict[doc_id]['cleaned_vocabulary'], top_vocabulary))/len(top_vocabulary)
     docs_dict.update({ -1 : { 'unpop' : 0 } })
 
     print("*    7/8 - Calculating cosine similarity for the vectorization matrix")

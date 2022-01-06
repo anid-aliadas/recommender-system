@@ -111,7 +111,7 @@ class Recommender(object):
         self.XI = XI # users interests
         self.users_similarity_matrix = cosine_similarity(X)
         self.items_similarity_matrix = cosine_similarity(X.T)
-        self.unpop = X.sum(axis=0)/X.shape[0]
+        self.unpop = 1 - X.sum(axis=0)/X.shape[0]
 
         self.users_data = {}
         self.unique_users = []
@@ -206,7 +206,6 @@ class Recommender(object):
         out['mean'] = self.Xmean[row_i]
         out['users'] = top_user_indices
         return out
-    
 
     def check_recommendations(self, row_i, recs, top_users=3, alpha=1, limits=(0,5)):
         '''
